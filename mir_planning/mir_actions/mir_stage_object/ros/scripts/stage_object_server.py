@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import mir_states.common.manipulation_states as gms  # move the arm, and gripper
+import mir_states.common.basic_states as mir_gbs
 import rospy
 import smach
 import smach_ros
