@@ -48,7 +48,7 @@ In order to get access to the hub, we need to add your LDAP username.
   
   * University VPN
 
-    Follow `this instruction <https://ux-2s18.inf.h-brs.de/faq/vpn>`_ to setup VPN 
+    Follow `this instruction <https://faq.infcs.de/vpn>`_ to setup VPN 
     in your local machine. Once you are connected to the university VPN, you can 
     open the Hub address.
 
