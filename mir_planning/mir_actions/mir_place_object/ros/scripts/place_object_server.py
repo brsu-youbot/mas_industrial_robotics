@@ -699,7 +699,8 @@ def main():
             gbs.send_event(
                 [("/mcr_perception/place_pose_selector/event_in", "e_stop")]
             ),
-            transitions={"success": "OPEN_GRIPPER"},
+            # transitions={"success": "OPEN_GRIPPER"},
+            transitions={"success": "RELEASE_GRIPPER"},
         )
 
 
@@ -804,20 +805,21 @@ def main():
                 timeout_duration=20,
             ),
             transitions={
-                "success": "OPEN_GRIPPER", 
+                # "success": "OPEN_GRIPPER", 
+                "success": "RELEASE_GRIPPER",
                 "timeout": "OVERALL_FAILED",
                 "failure": "OVERALL_FAILED",
             },
         )
 
-
         smach.StateMachine.add(
-                "OPEN_GRIPPER",
-                gms.control_gripper(0.25),
+                "RELEASE_GRIPPER",
+                gms.control_gripper('release'),
                 transitions={
 			        "succeeded": "MOVE_ARM_UP",
                                  "timeout": "MOVE_ARM_UP"}
         )
+
 
         smach.StateMachine.add(
                 "MOVE_ARM_UP",
@@ -831,10 +833,19 @@ def main():
                 "MOVE_ARM_TO_NEUTRAL",
                 gms.move_arm("pre_place", use_moveit=False),
                 transitions={
-                    "succeeded": "OVERALL_SUCCESS",
+                    "succeeded": "OPEN_GRIPPER",
                     "failed": "MOVE_ARM_TO_NEUTRAL",
             },
         )
+
+        smach.StateMachine.add(
+                "OPEN_GRIPPER",
+                gms.control_gripper('open'),
+                transitions={
+			        "succeeded": "OVERALL_SUCCESS",
+                                 "timeout": "OVERALL_SUCCESS"}
+        )
+        
 
     sm.register_transition_cb(transition_cb)
     sm.register_start_cb(start_cb)
