@@ -213,6 +213,7 @@ void EmptySpaceDetector::findEmptySpacesOnPlane(const PointCloud::Ptr &plane,
         pose.position.x = p.x;
         pose.position.y = p.y;
         pose.position.z = p.z;
+        // pose.orientation.z = 1.5;  // newly added
         pose.orientation.w = 1.0;
         empty_space_poses.poses.push_back(pose);
       }

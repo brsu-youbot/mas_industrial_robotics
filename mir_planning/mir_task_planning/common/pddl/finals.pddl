@@ -14,7 +14,7 @@
         (= (total-cost) 0) 
         ;Cost information ends 
 
-        (at YOUBOT-BRSU PP01) 
+        (at YOUBOT-BRSU START) 
         (gripper_is_free YOUBOT-BRSU) 
 
         (on ALLENKEY WS01) 
@@ -45,6 +45,12 @@
         (on PP01_CAVITY-00 PP01) 
         (is_large ALLENKEY) 
         (is_large DRILL) 
+        (insertable F20_20_G)
+        (insertable ALLENKEY)
+        (insertable SCREWDRIVER)
+        (insertable WRENCH)
+        (insertable M20)
+        (insertable M20_100)
         (is_big_enough PLATFORM_RIGHT) 
     ) 
 

@@ -17,7 +17,7 @@
         (at YOUBOT-BRSU START) 
         (gripper_is_free YOUBOT-BRSU) 
 
-        (on ALLENKEY-00 WS05) 
+        (on ALLENKEY-00 WS01) 
 
         (on M20-00 WS02) 
         (on SCREWDRIVER-00 WS02) 
@@ -27,10 +27,10 @@
         
         (on HOUSING-00 WS04)
 
-        (on BEARING2-00 WS01) 
-        (on F20_20_G-00 WS06) 
+        (on BEARING2-00 WS05) 
+        (on F20_20_G-00 TT01) 
 
-        (on S40_40_G-00 TT01) 
+        (on S40_40_G-00 WS06) 
         
         (on MOTOR2-00 SH01) 
         (on S40_40_B-00 SH01) 

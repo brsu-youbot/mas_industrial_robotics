@@ -593,7 +593,9 @@ void MultimodalObjectRecognitionROS::recognizeCloudAndImage()
 
           if (obj_category_ == "cavity")
           {
-            rgb_object_list.objects[i].pose.pose.position.x += 0.02;
+            // rgb_object_list.objects[i].pose.pose.position.x += 0.02;
+            rgb_object_list.objects[i].pose.pose.position.x += (0.005);
+            rgb_object_list.objects[i].pose.pose.position.y += (-0.006);
           }
 
           // print the rpy pose
@@ -907,6 +909,7 @@ void MultimodalObjectRecognitionROS::adjustObjectPose(mas_perception_msgs::Objec
       object_list.objects[i].pose.pose.orientation.w = q2.w(); 
 
       double detected_object_height = object_list.objects[i].pose.pose.position.z;
+      ROS_WARN_STREAM("Object:" << object_list.objects[i].name << "  Object height: " << detected_object_height << "  Workspace height: " << scene_segmentation_ros_->getWorkspaceHeight());
       if (obj_category_ == "cavity")
       {
            ROS_WARN_STREAM("PP01 workstation; not updating height");
@@ -916,6 +919,7 @@ void MultimodalObjectRecognitionROS::adjustObjectPose(mas_perception_msgs::Objec
       {
            ROS_WARN_STREAM("Container; not updating height");
       }
+      // if the detected plane is not the same where object is placed
       else if (use_fixed_heights_ or (std::fabs(detected_object_height - scene_segmentation_ros_->getWorkspaceHeight()) > 0.03))
       {
            if (use_fixed_heights_)
@@ -925,7 +929,7 @@ void MultimodalObjectRecognitionROS::adjustObjectPose(mas_perception_msgs::Objec
            else
            {
               ROS_WARN_STREAM("Difference between object height and workspace height is > 3cm");
-              ROS_WARN_STREAM("Object height: " << detected_object_height << " Workspace height: " << scene_segmentation_ros_->getWorkspaceHeight() << "Hight of floor: " << height_of_floor_);
+              ROS_WARN_STREAM("Object:" << object_list.objects[i].name << "  Object height: " << detected_object_height << "  Workspace height: " << scene_segmentation_ros_->getWorkspaceHeight() << "  Hight of floor: " << height_of_floor_);
            }
            // do something
            bool is_0cm = std::fabs(detected_object_height - height_of_floor_) < 0.01;

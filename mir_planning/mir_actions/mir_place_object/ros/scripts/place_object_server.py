@@ -69,7 +69,7 @@ class MoveArmUp(smach.State):
                 break
         joint_values = self.current_joint_positions[:]
         joint_values = list(joint_values)
-        joint_values[1] = self.joint_1_position
+        joint_values[1] -= 0.3 # self.joint_1_position
         
         names = self.joint_state.name
 
@@ -240,7 +240,7 @@ class DefalutSafePose(smach.State):
         rospy.logwarn("Checking pre-defined safe pose")
         location = Utils.get_value_of(userdata.goal.parameters, "location")
         current_platform_height = rospy.get_param("/"+location)
-        userdata.move_arm_to = str(str(current_platform_height)+'cm/pose4')
+        userdata.move_arm_to = str(str(current_platform_height)+'pose4cm/')
         print("from place server ========")
         print(userdata.move_arm_to)
         rospy.sleep(0.1)
@@ -607,9 +607,17 @@ def main():
         smach.StateMachine.add(
             "OPEN_GRIPPER_SHELF",
             gms.control_gripper("open"),
+            transitions={"succeeded": "MOVE_ARM_SAFE",
+                         "timeout": "MOVE_ARM_SAFE"}
+        )
+
+        smach.StateMachine.add(
+            "MOVE_ARM_SAFE",
+            MoveArmUp(),
             transitions={"succeeded": "MOVE_ARM_TO_SHELF_INTERMEDIATE_RETRACT",
                          "timeout": "MOVE_ARM_TO_SHELF_INTERMEDIATE_RETRACT"}
         )
+
 
         smach.StateMachine.add(
             "MOVE_ARM_TO_SHELF_INTERMEDIATE_RETRACT",

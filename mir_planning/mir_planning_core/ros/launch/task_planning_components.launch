@@ -9,11 +9,17 @@
     <arg name="base_path" default="$(find mir_knowledge)/common/pddl/$(arg domain)" />
     <arg name="domain_path" default="$(arg base_path)/domain.pddl" />
 
-    <!-- upload domain args - pddl problem that will be loaded as instrinsic knowledge -->
-    <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/minimum_required_facts.pddl" />
-    <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/mini_bmt_demo.pddl" /> -->
+    <!-- upload domain args - pddl problem that will be loaded as instrinsic knowledge --> 
+    <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/minimum_required_facts.pddl" /> -->
+    <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/mini_bmt_demo_copy.pddl" /> -->
+    <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/go24_finals.pddl" /> -->
+    <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/bmt_rc24.pddl" /> -->
+    <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/btt2_rc24.pddl" /> -->
+    <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/att1_rc24.pddl" /> -->
+    <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/att2_rc24.pddl" />
+    <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/rtt_shelf_ppt.pddl" /> -->
+    <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/atWork_demo.pddl" /> -->
     <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/all_without_rtt.pddl" /> -->
-    <!--<arg name="yb_intrinsic_knowledge" default="$(arg base_path)/finals2.pddl" /> -->
     <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/finals.pddl" /> -->
     <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/local_2022_problem_complete.pddl" /> -->
 

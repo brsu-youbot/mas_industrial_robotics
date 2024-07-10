@@ -25,9 +25,9 @@ find_package(PCL 1.10 REQUIRED)
 find_package(VTK REQUIRED)
 find_package(OpenCV REQUIRED)
 
-generate_dynamic_reconfigure_options(
-  ros/config/SceneSegmentation.cfg
-)
+# generate_dynamic_reconfigure_options(
+#   ros/config/SceneSegmentation.cfg
+# )
 
 catkin_package(
 

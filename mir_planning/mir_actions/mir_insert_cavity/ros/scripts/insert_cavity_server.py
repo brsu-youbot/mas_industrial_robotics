@@ -623,7 +623,8 @@ def main():
         # open gripper
         smach.StateMachine.add(
             "OPEN_GRIPPER",
-            gms.control_gripper(0.2),
+            # gms.control_gripper(0.2),
+            gms.control_gripper('open'),
             transitions={
                 "succeeded": "MOVE_ARM_UP",
                 "timeout": "MOVE_ARM_UP"

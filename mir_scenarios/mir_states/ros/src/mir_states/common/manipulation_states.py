@@ -271,6 +271,8 @@ class control_gripper(smach.State):
                 self.command.command = GripperCommand.OPEN
             elif 'close' in target:
                 self.command.command = GripperCommand.CLOSE
+            elif 'release' in target:
+                self.command.command = GripperCommand.RELEASE
         elif type(target) == float:
             self.command.command = target
         self.pub = rospy.Publisher('/arm_1/gripper_command', GripperCommand, queue_size=1)
@@ -339,7 +341,7 @@ class verify_object_grasped(smach.State):
             if self.current_state == "GRIPPER_CLOSED" or\
                self.current_state == "GRIPPER_INTER" or\
                self.current_state == "GRIPPER_OPEN":
-                if object_name == "WRENCH":
+                if object_name == "WRENCH" or object_name == "DRILL" or object_name == "ALLENKEY":
                     # TODO: modify this
                     return "succeeded"
                 return "failed"

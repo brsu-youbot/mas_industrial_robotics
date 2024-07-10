@@ -191,6 +191,7 @@
                       		(not (holding ?r ?peg))
    							;(not (gripper_is_free ?g))
                             (gripper_is_free ?r)
+							(insertable ?peg)
                             (stored ?peg ?rp)
    							(not (container ?peg)) ;a container cannot be inserted into a container
    					)

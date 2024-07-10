@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="serial_no_camera1" default="919122072278" />
-  <arg name="serial_no_camera2" default="827112070805" />
+  <arg name="serial_no_camera1" default="827112070805" />
+  <arg name="serial_no_camera2" default="919122072278" />
 
   <arg name="camera1" default="tower_cam3d_front" />
   <arg name="camera2" default="tower_cam3d_back" />
