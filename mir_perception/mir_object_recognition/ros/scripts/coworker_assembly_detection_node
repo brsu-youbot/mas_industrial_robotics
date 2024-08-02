@@ -51,7 +51,7 @@ class CoworkerAssembly():
         self.net = 'detection'
         self.model_name = 'yolov8'
         weights = os.path.join(roslib.packages.get_pkg_dir("mir_rgb_object_recognition_models"),
-                           'common', 'models', 'yolov8', 'robocup_2023_dataset', "coworker_assembly_model.pt")
+                           'common', 'models', 'yolov8', 'robocup_2023_dataset', "coworker_gesture_rcaw24.pt")
         self.weights = weights
         self.confidence_threshold = 0.8
         self.iou_threshold = 0.45
@@ -288,7 +288,7 @@ class CoworkerAssembly():
                         predicted_pose.header.frame_id = "base_link_static"
                         predicted_pose.pose.position.x = center_BL[0]
                         predicted_pose.pose.position.y = center_BL[1]
-                        predicted_pose.pose.position.z = 0.06
+                        predicted_pose.pose.position.z = 0.01
                                 
                         # convert yaw_list_CL to yaw_list_BL
                         yaw_BL = np.pi/2 - yaw_angle # from CL to BL

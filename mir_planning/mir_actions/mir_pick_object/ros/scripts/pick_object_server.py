@@ -135,6 +135,32 @@ class MoveArmUp(smach.State):
         self.arm_velocity_pub.publish(vel_msg)
         return "succeeded"
 
+# =================================rc24===========================
+class MoveArmDown(smach.State):
+    def __init__(self):
+        smach.State.__init__(
+            self,
+            outcomes=["succeeded"],
+            input_keys=["goal"],
+            output_keys=["feedback", "result"],
+        )
+        # velocity publisher
+        self.arm_velocity_pub = rospy.Publisher("/arm_1/arm_controller/cartesian_velocity_command", TwistStamped, queue_size=1)
+    
+    def execute(self, userdata):
+        
+        # send the velocity in +z direction wrt base_link to move the arm up
+        vel_msg = TwistStamped()
+        vel_msg.header.frame_id = "base_link"
+        # set velocity to 5cm/s
+        vel_msg.twist.linear.z = -0.04  #to do
+        self.arm_velocity_pub.publish(vel_msg)
+        rospy.sleep(1.5)
+        # stop the arm
+        vel_msg.twist.linear.z = 0
+        self.arm_velocity_pub.publish(vel_msg)
+        return "succeeded"    
+
 # ===============================================================================
 def transition_cb(*args, **kwargs):
     userdata = args[0]
@@ -506,9 +532,36 @@ def main():
         smach.StateMachine.add(
             "OPEN_GRASP_FAILURE",
             gms.control_gripper("open"),
-            transitions={"succeeded": "MOVE_TO_PRE_PLACE_AND_FAIL",
-                         "timeout": "MOVE_TO_PRE_PLACE_AND_FAIL"},
+            transitions={"succeeded": "MOVE_ARM_DOWN",
+                         "timeout": "MOVE_ARM_DOWN"},
         )
+
+        #================================RC24==============
+
+        smach.StateMachine.add(
+            "MOVE_ARM_DOWN",
+            MoveArmDown(),
+            transitions={
+                "succeeded": "CLOSE_GRIPPER_REPICK"
+            },
+        )
+
+        smach.StateMachine.add(
+            "CLOSE_GRIPPER_REPICK",
+            gms.control_gripper("close"),
+            transitions={"succeeded": "MOVE_ARM_UP_AGAIN",
+                         "timeout": "MOVE_ARM_UP_AGAIN"},
+        )
+
+        smach.StateMachine.add(
+            "MOVE_ARM_UP_AGAIN",
+            MoveArmUp(),
+            transitions={
+                "succeeded": "MOVE_ARM_TO_PRE_PLACE"
+            },
+        )
+
+        #=================================================
 
         smach.StateMachine.add(
             "MOVE_TO_PRE_PLACE_AND_FAIL",

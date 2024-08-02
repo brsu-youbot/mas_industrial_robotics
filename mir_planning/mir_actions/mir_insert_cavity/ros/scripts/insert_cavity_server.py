@@ -23,7 +23,7 @@ from smach_ros import ActionServerWrapper, IntrospectionServer
 from std_msgs.msg import Float64, String
 from diagnostic_msgs.msg import KeyValue
 from sensor_msgs.msg import JointState
-
+from brics_actuator.msg import JointPositions, JointValue
 
 class SelectCavity(smach.State):
     def __init__(self, topic_name, vertical=False):
@@ -76,7 +76,7 @@ class SelectCavity(smach.State):
             return "failed"
 
         self.publisher.publish(String(data=cavity_name))
-        rospy.sleep(0.2)  # let the topic survive for some time
+        rospy.sleep(0.3)  # let the topic survive for some time #0.2
         return "succeeded"
 
 # ===============================================================================
@@ -86,7 +86,7 @@ class MoveArmUp(smach.State):
     def __init__(self):
         smach.State.__init__(
             self,
-            outcomes=["succeeded"],
+            outcomes=["succeeded", "failed"],
             input_keys=["goal"],
             output_keys=["feedback", "result"],
         )
@@ -99,7 +99,7 @@ class MoveArmUp(smach.State):
         vel_msg = TwistStamped()
         vel_msg.header.frame_id = "base_link"
         # set velocity to 5cm/s
-        vel_msg.twist.linear.z = 0.04
+        vel_msg.twist.linear.z = 0.02 #0.04
         self.arm_velocity_pub.publish(vel_msg)
         rospy.sleep(0.55)
         # stop the arm
@@ -458,6 +458,59 @@ class ppt_wiggle_arm(smach.State):
 
         return "succeeded"
 
+# =============================ROBOCUP24================================================
+class ArmSafe(smach.State):
+
+    def __init__(self):
+        smach.State.__init__(
+            self,
+            outcomes=["success", "failed"],
+        )
+        self.joint_states_sub = rospy.Subscriber("/joint_states", JointState, self.joint_states_cb)
+        self.pub_arm_position = rospy.Publisher("/arm_1/arm_controller/position_command", JointPositions, queue_size=1)
+        self.current_joint_positions = None
+        self.is_arm_moving = False
+        self.zero_vel_counter = 0
+        self.joint_1_position = 1.8787 #1.8787
+
+    def joint_states_cb(self, msg):
+        if "arm_joint_1" in msg.name: # get the joint values of the arm only
+            self.current_joint_positions = msg.position
+
+        self.joint_state = msg
+        # monitor the velocities
+        self.joint_velocities = msg.velocity
+        # if all velocities are 0.0, the arm is not moving
+        if "arm_joint_1" in msg.name and all([v == 0.0 for v in self.joint_velocities]):
+            self.zero_vel_counter += 1
+
+    def execute(self, userdata):
+        self.current_joint_positions = None
+        while not rospy.is_shutdown():
+            rospy.sleep(0.1)
+            if self.current_joint_positions is not None:
+                break
+        joint_values = self.current_joint_positions[:]
+        joint_values = list(joint_values)
+        joint_values[0] -= 0.15 # self.joint_0_position
+        
+        names = self.joint_state.name
+
+        joint_positions = JointPositions()
+        joint_positions.positions = [
+            JointValue(
+                rospy.Time.now(),
+                joint_name,
+                "rad",
+                joint_value
+            )
+            for joint_name, joint_value in zip(names, joint_values)
+        ]
+        self.pub_arm_position.publish(joint_positions)
+        rospy.sleep(1)
+        return "success"
+
+
 # ===============================================================================
 
 class Unstage_to_place(smach.State):
@@ -490,6 +543,9 @@ class Unstage_to_place(smach.State):
 
         self.unstage_client.send_goal(goal)
         self.unstage_client.wait_for_result(rospy.Duration.from_sec(25.0))
+
+        # rospy.sleep(0.05)
+        # rospy.loginfo("Waiting after Unstaging")
 
         return "success"
 
@@ -585,13 +641,35 @@ def main():
             },
         )
 
+        # #safety
+        # smach.StateMachine.add(
+        #     "ARM_SAFE",
+        #     ArmSafe(),
+        #     transitions={
+        #         "success":"SET_DBC_PARAMS", 
+        #         "failed":"OVERALL_FAILED",
+        #     },
+        # )
+
+        
+
         smach.StateMachine.add(
             "SET_DBC_PARAMS",
             gbs.set_named_config("dbc_pick_object"),
             transitions={
-                "success": "MOVE_ROBOT_AND_TRY_INSERTING",
+                "success": "ARM_SAFE",
                 "timeout": "OVERALL_FAILED",
                 "failure": "OVERALL_FAILED",
+            },
+        )
+
+        #safety
+        smach.StateMachine.add(
+            "ARM_SAFE",
+            ArmSafe(),
+            transitions={
+                "success":"MOVE_ROBOT_AND_TRY_INSERTING", 
+                "failed":"OVERALL_FAILED",
             },
         )
 
@@ -627,7 +705,7 @@ def main():
             gms.control_gripper('open'),
             transitions={
                 "succeeded": "MOVE_ARM_UP",
-                "timeout": "MOVE_ARM_UP"
+                "timeout": "MOVE_ARM_UP",
             },
         )
 
@@ -636,13 +714,15 @@ def main():
             MoveArmUp(),
             transitions={
                 "succeeded": "WIGGLE_ARM",
+                "failed" : "MOVE_ARM_UP",
+                
             },
         )
 
         # wiggling the arm for precision placement
         smach.StateMachine.add(
             "WIGGLE_ARM",
-            ppt_wiggle_arm(wiggle_yaw=1.57),
+            ppt_wiggle_arm(wiggle_yaw=-1.57),
             transitions={
                 "succeeded": "MOVE_ARM_TO_HOLD",
                 "failed": "MOVE_ARM_TO_HOLD",

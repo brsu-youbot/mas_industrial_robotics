@@ -48,7 +48,7 @@ class MoveArmUp(smach.State):
         self.current_joint_positions = None
         self.is_arm_moving = False
         self.zero_vel_counter = 0
-        self.joint_1_position = 1.8787
+        self.joint_1_position = 1.3787 #1.8787
 
     def joint_states_cb(self, msg):
         if "arm_joint_1" in msg.name: # get the joint values of the arm only
@@ -96,7 +96,8 @@ class DefineShelfPlacePose(smach.State):
                              input_keys=["goal"],
                              output_keys=['move_arm_to'])
         self.pose_list_sh01 = ["shelf_place_1", "shelf_place_2"]
-        self.pose_list_sh02 = ["shelf_place_3", "shelf_place_4"]
+        self.pose_list_sh02 = ["shelf_place_1", "shelf_place_2"]
+        # self.pose_list_sh02 = ["shelf_place_3", "shelf_place_4"]
 
     def execute(self, userdata):
         location = Utils.get_value_of(userdata.goal.parameters, "location")
@@ -660,8 +661,6 @@ def main():
             },
         )
 
-        
-
 # below states are for default pose placing
 
         smach.StateMachine.add(
@@ -825,9 +824,33 @@ def main():
                 gms.control_gripper('release'),
                 transitions={
 			        "succeeded": "MOVE_ARM_UP",
-                                 "timeout": "MOVE_ARM_UP"}
+                         "timeout": "MOVE_ARM_UP"}
         )
 
+# # Fail safe conditions added during RCAW2024
+#         smach.StateMachine.add(
+#                 "OPEN_FORCEFULLY",
+#                 gms.control_gripper('open'),
+#                 transitions={
+# 			        "succeeded": "MOVE_ARM_UP_FORCEFULLY",
+#                                  "timeout": "MOVE_ARM_UP_FORCEFULLY"}
+#         )
+#         smach.StateMachine.add(
+#                 "MOVE_ARM_UP_FORCEFULLY",
+#                 MoveArmUp(),
+#                 transitions={
+# 			        "succeeded": "MOVE_ARM_TO_NEUTRAL",
+#                                  "timeout": "MOVE_ARM_TO_NEUTRAL"}
+#         )
+
+# # End of fail safe
+        # smach.StateMachine.add(
+        #         "MOVE_ARM_UP",
+        #         MoveArmUp(),
+        #         transitions={
+		# 	        "succeeded": "OPEN_FAIL_SAFE",
+        #                          "timeout": "OPEN_FAIL_SAFE"}
+        # )
 
         smach.StateMachine.add(
                 "MOVE_ARM_UP",
@@ -837,6 +860,16 @@ def main():
                                  "timeout": "MOVE_ARM_TO_NEUTRAL"}
         )
 
+
+# Fail safe conditions added during RCAW2024
+        # smach.StateMachine.add(
+        #         "OPEN_FAIL_SAFE",
+        #         gms.control_gripper('open'),
+        #         transitions={
+		# 	        "succeeded": "MOVE_ARM_TO_NEUTRAL",
+        #                          "timeout": "MOVE_ARM_TO_NEUTRAL"}
+        # )
+# End
         smach.StateMachine.add(
                 "MOVE_ARM_TO_NEUTRAL",
                 gms.move_arm("pre_place", use_moveit=False),

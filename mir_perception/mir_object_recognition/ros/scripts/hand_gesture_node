@@ -48,7 +48,7 @@ class GestureRecognition():
         weights = os.path.join(roslib.packages.get_pkg_dir("mir_rgb_object_recognition_models"),
                            'common', 'models', 'yolov8', 'robocup_2023_dataset', "hand_gesture_model.pt")
         self.weights = weights
-        self.confidence_threshold = 0.8
+        self.confidence_threshold = 0.5
         self.iou_threshold = 0.45
         self.augment = False
         

@@ -499,63 +499,95 @@ class RTTObjectTracker():
                                         self.object_pose[label].header.frame_id = "base_link"
                                         self.object_pose[label].pose.position.x = closest_x
                                         self.object_pose[label].pose.position.y = closest_y
+                                        self.object_pose[label].pose.position.z = 0.010
                                         
                                         
                                         # TODO: Object position height (0.010 for C069 lab) is added as fixed value. Write a method to get RTT table height.
-                                        # if label =="M20_100" or label == "M30" or label == "M20" or label == "F20_20_B" or label == "F20_20_G":
-                                        #     rospy.logwarn("OBJECT IS M20_100 or M30 AND POSE IN Z IS 0.007")
-                                        #     self.object_pose[label].pose.position.z = 0.005
-                                        # elif label =="S40_40_B" or label == "S40_40_G":
-                                        #     rospy.logwarn("OBJECT IS S40_40 AND POSE IN Z IS 0.015")
-                                        #     self.object_pose[label].pose.position.z = 0.010
-                                        # else:
-                                        #     rospy.logwarn("OBJECT POSE IN Z IS 0.010")
-                                        #     self.object_pose[label].pose.position.z = 0.010
-
-                                        # if label =="S40_40_B" or label == "S40_40_G" or label == "MOTOR2":
-                                        #     rospy.logwarn("OBJECT IS S40_40 AND POSE IN Z IS 0.010")
-                                        #     # self.object_pose[label].pose.position.z = 0.011
-                                        # elif label == "M20":
-                                        #     rospy.logwarn("OBJECT IS M20 AND POSE IN Z IS 0.005")
-                                        #     # self.object_pose[label].pose.position.z = 0.005
-                                        # else:
-                                        #     rospy.logwarn("Normal OBJECT POSE IN Z IS 0.007")
-                                        #     # self.object_pose[label].pose.position.z = 0.007
-                                        
-
                                         if label == "M30" or label == "M20" or label == "BEARING2":
-                                            
-                                            # self.object_pose[label].pose.position.y -= 0.0025
-                                            self.object_pose[label].pose.position.z += 0.002
-
                                             self.object_pose[label].pose.orientation.x = 0.0
                                             self.object_pose[label].pose.orientation.y = 0.0
                                             self.object_pose[label].pose.orientation.z = 0.0
                                             self.object_pose[label].pose.orientation.w = 1.0
-
-
-                                        if label == "S40_40_B" or label == "S40_40_G" or label == "MOTOR2":
-
-                                            self.object_pose[label].pose.position.z += 0.005
-                                        
-                                            predicted_yaw = self.predict_yaw(xc, yc, centers, yaw_list)
-                                            orientation = tr.quaternion_from_euler(0, 0, predicted_yaw)
-                                            self.object_pose[label].pose.orientation.x = orientation[0]
-                                            self.object_pose[label].pose.orientation.y = orientation[1]
-                                            self.object_pose[label].pose.orientation.z = orientation[2]
-                                            self.object_pose[label].pose.orientation.w = orientation[3]
-                                            self.orientation_estimation_complete = True
-
                                         else:
-                                            self.object_pose[label].pose.position.z += 0.002
                                             predicted_yaw = self.predict_yaw(xc, yc, centers, yaw_list)
                                             orientation = tr.quaternion_from_euler(0, 0, predicted_yaw)
                                             self.object_pose[label].pose.orientation.x = orientation[0]
                                             self.object_pose[label].pose.orientation.y = orientation[1]
                                             self.object_pose[label].pose.orientation.z = orientation[2]
                                             self.object_pose[label].pose.orientation.w = orientation[3]
-                                            self.orientation_estimation_complete = True
+                                        self.orientation_estimation_complete = True
+                                        #===========NEWLY aDDED================
 
+                                        # if label in ["M30", "M20", "BEARING2"]:
+                                        #     self.object_pose[label].pose.position.z += 0.005 #adjust the tolerance
+                                        #     self.object_pose[label].pose.orientation.x = 0.0
+                                        #     self.object_pose[label].pose.orientation.y = 0.0
+                                        #     self.object_pose[label].pose.orientation.z = 0.0
+                                        #     self.object_pose[label].pose.orientation.w = 1.0
+                                        # elif label in ["WRENCH", "ALLENKEY", "DRILL"]:
+                                        #     self.object_pose[label].pose.position.z += 0.005 #adjust the tolerance
+                                        #     orientation = tr.quaternion_from_euler(0, 0, predicted_yaw)
+                                        #     self.object_pose[label].pose.orientation.x = orientation[0]
+                                        #     self.object_pose[label].pose.orientation.y = orientation[1]
+                                        #     self.object_pose[label].pose.orientation.z = orientation[2]
+                                        #     self.object_pose[label].pose.orientation.w = orientation[3]
+                                        # elif label in ["S40_40_B", "S40_40_G", "MOTOR2"]:
+                                        #     self.object_pose[label].pose.position.z += 0.001 #  adjust the tolerance
+                                        
+                                        # else:
+                                        #     predicted_yaw = self.predict_yaw(xc, yc, centers, yaw_list)
+                                        #     orientation = tr.quaternion_from_euler(0, 0, predicted_yaw)
+                                        #     self.object_pose[label].pose.orientation.x = orientation[0]
+                                        #     self.object_pose[label].pose.orientation.y = orientation[1]
+                                        #     self.object_pose[label].pose.orientation.z = orientation[2]
+                                        #     self.object_pose[label].pose.orientation.w = orientation[3]
+                                        # self.orientation_estimation_complete = True
+                                        
+
+                                        # if label == "M30" or label == "M20" or label == "BEARING2":
+                                            
+                                        #     # self.object_pose[label].pose.position.y -= 0.0025
+                                        #     self.object_pose[label].pose.position.z += 0.016    
+
+                                        #     self.object_pose[label].pose.orientation.x = 0.0
+                                        #     self.object_pose[label].pose.orientation.y = 0.0
+                                        #     self.object_pose[label].pose.orientation.z = 0.0
+                                        #     self.object_pose[label].pose.orientation.w = 1.0
+
+
+                                        # elif label == "S40_40_B" or label == "S40_40_G" or label == "MOTOR2":
+
+                                        #     self.object_pose[label].pose.position.z += 0.022  #0.05
+                                        
+                                        #     predicted_yaw = self.predict_yaw(xc, yc, centers, yaw_list)
+                                        #     orientation = tr.quaternion_from_euler(0, 0, predicted_yaw)
+                                        #     self.object_pose[label].pose.orientation.x = orientation[0]
+                                        #     self.object_pose[label].pose.orientation.y = orientation[1]
+                                        #     self.object_pose[label].pose.orientation.z = orientation[2]
+                                        #     self.object_pose[label].pose.orientation.w = orientation[3]
+                                        #     self.orientation_estimation_complete = True
+                                        
+                                        # elif label == "WRENCH" or label == "ALLENKEY" or label == "DRILL" :
+                                            
+                                        #     # self.object_pose[label].pose.position.y -= 0.0025
+                                        #     self.object_pose[label].pose.position.z += 0.016
+
+                                        #     self.object_pose[label].pose.orientation.x = 0.0
+                                        #     self.object_pose[label].pose.orientation.y = 0.0
+                                        #     self.object_pose[label].pose.orientation.z = 0.0
+                                        #     self.object_pose[label].pose.orientation.w = 1.0
+
+                                        # else:
+                                        #     self.object_pose[label].pose.position.z += 0.018 #0.002 0.018
+                                        #     predicted_yaw = self.predict_yaw(xc, yc, centers, yaw_list)
+                                        #     orientation = tr.quaternion_from_euler(0, 0, predicted_yaw)
+                                        #     self.object_pose[label].pose.orientation.x = orientation[0]
+                                        #     self.object_pose[label].pose.orientation.y = orientation[1]
+                                        #     self.object_pose[label].pose.orientation.z = orientation[2]
+                                        #     self.object_pose[label].pose.orientation.w = orientation[3]
+                                        #     self.orientation_estimation_complete = True
+
+                                        
                                     # TODO: Plot predicted yaw on debug image.
                                     if not self.rotational_speed_calculation_complete:
                                         # get rotational speed

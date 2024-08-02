@@ -346,7 +346,7 @@ class verify_object_grasped(smach.State):
                     return "succeeded"
                 return "failed"
             elif self.current_state == "OBJECT_GRASPED" and\
-                        self.grasped_counter > 4:
+                        self.grasped_counter > 10:  #4
                 self.grasped_counter = 0
                 return "succeeded"
         rospy.logerr('Grasp verification timeout')

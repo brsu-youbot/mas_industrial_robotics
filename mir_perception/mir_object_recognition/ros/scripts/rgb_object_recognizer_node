@@ -78,14 +78,14 @@ class RGBObjectRecognizer():
                         rospy.loginfo(f"\033[92m" + f"[RGB Recognizer] is using atwork objects category model" + f"\033[0m")
 
                     if self.model_name == 'yolov8':
-
+                        rospy.loginfo(f"\033[92m" + f"[RGB Recognizer] object category {obj_category}" + f"\033[0m")
                         predictions = self.model.predict(source=cv_img,
                                                          conf=self.confidence_threshold,
                                                          iou=self.iou_threshold,
                                                          device=self.device,
                                                          verbose=False
                                                         )
-
+                        rospy.loginfo(f"\033[92m" + f"[RGB Recognizer] object category {obj_category}" + f"\033[0m")
                         if obj_category == "cavity":
                             # # Uncomment to run segmention model
                             # preds = predictions[0]
@@ -248,6 +248,8 @@ if __name__ == '__main__':
                            'common', 'models', classifier_name, dataset, model_category[0]+".pt")
     weight_2 = os.path.join(roslib.packages.get_pkg_dir("mir_rgb_object_recognition_models"),
                             'common', 'models', classifier_name, dataset, model_category[1]+".pt")
+    
+    rospy.loginfo(f"\033[92m" + f"[RGB Recognizer] is using {weight_1} model" + f"\033[0m")
     # check if the model exists
     if not os.path.isfile(weight_1):
         rospy.logerr("[RGB Recognition] Model not found: %s", weight_1)
@@ -256,6 +258,7 @@ if __name__ == '__main__':
         rospy.logerr("[RGB Recognition] Model not found: %s", weight_2)
         exit(-1)
     weights = [weight_1, weight_2] # 0th index is the default model, eg. atwork
+    rospy.loginfo(f"\033[92m" + f"[RGB Recognizer] is using {weights} model" + f"\033[0m")
     object_recognizer = RGBObjectRecognizer(
         weights, 
         debug_mode=True)

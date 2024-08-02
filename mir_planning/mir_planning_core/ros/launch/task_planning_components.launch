@@ -10,13 +10,13 @@
     <arg name="domain_path" default="$(arg base_path)/domain.pddl" />
 
     <!-- upload domain args - pddl problem that will be loaded as instrinsic knowledge --> 
-    <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/minimum_required_facts.pddl" /> -->
+    <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/minimum_required_facts.pddl" />
     <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/mini_bmt_demo_copy.pddl" /> -->
     <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/go24_finals.pddl" /> -->
     <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/bmt_rc24.pddl" /> -->
-    <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/btt2_rc24.pddl" /> -->
+    <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/robocup_advanced_tasks.pddl" /> -->
     <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/att1_rc24.pddl" /> -->
-    <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/att2_rc24.pddl" />
+    <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/att2_rc24.pddl" /> -->
     <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/rtt_shelf_ppt.pddl" /> -->
     <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/atWork_demo.pddl" /> -->
     <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/all_without_rtt.pddl" /> -->
@@ -26,7 +26,7 @@
     <!-- pddl problem gen - path for the pddl problem generator to save the created file, and for the planner to make plan -->
     <arg name="problem_path" default="$(arg base_path)/problems/p1.pddl" />
 
-    <!-- rosplan knowledge base interface-->
+    <!-- rosplan knowledge base interface-->lama
     <node pkg="rosplan_knowledge_base" type="knowledgeBase" name="rosplan_knowledge_base"
           output="screen" required="true" >
         <param name="domain_path" value="$(arg domain_path)" />
