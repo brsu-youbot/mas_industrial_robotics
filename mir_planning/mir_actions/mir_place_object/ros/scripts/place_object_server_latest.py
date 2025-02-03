@@ -134,7 +134,7 @@ class TriggerPointCloudProcessing(smach.State):
         self.event_received = False
         self.trigger_pub.publish(String("e_cloud"))
         
-        timeout = rospy.Duration(10.0)  # 10 seconds timeout
+        timeout = rospy.Duration(5.0)  # 5 seconds timeout
         start_time = rospy.Time.now()
         
         while not self.event_received and (rospy.Time.now() - start_time) < timeout:
