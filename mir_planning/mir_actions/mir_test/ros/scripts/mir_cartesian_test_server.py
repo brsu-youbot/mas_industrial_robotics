@@ -144,7 +144,7 @@ class SendStopEvent(smach.State):
 
 class PublishEmptyspacePose(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=["success", "failed", "timeout"],
+        smach.State.__init__(self, outcomes=["success", "failed"],
                                     input_keys=["goal"],
                                     output_keys=["move_arm_to"])
 
@@ -208,7 +208,7 @@ def main():
 
     # Construct state machine
     sm = smach.StateMachine(
-        outcomes=["OVERALL_SUCCESS", "OVERALL_FAILED", "timeout"],
+        outcomes=["OVERALL_SUCCESS", "OVERALL_FAILED"],
         input_keys=["goal"],
         output_keys=["feedback", "result"],
     )
