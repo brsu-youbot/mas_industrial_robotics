@@ -155,8 +155,12 @@
 
     <!-- Empty space detector -->
 
-    <include file = "$(find mir_empty_space_detection)/ros/launch/empty_space_detector.launch">
+    <!-- <include file = "$(find mir_empty_space_detection)/ros/launch/empty_space_detector.launch">
         <arg name="camera_name" value="$(arg camera_name)"/>
+    </include> -->
+
+    <!-- Empty space predictor -->
+    <include file = "$(find mir_empty_space_prediction)/launch/empty_space_predictor.launch">
     </include>
 
     <!-- RTT Detector -->
