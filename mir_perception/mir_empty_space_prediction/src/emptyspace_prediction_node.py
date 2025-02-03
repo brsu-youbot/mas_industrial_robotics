@@ -70,6 +70,8 @@ class EmptySpaceDetector:
             elif msg.data == "e_stop":
                 self.process_image = False
                 self.process_pointcloud = False
+                self.center = None
+                rospy.loginfo("Received stop event. Processing halted.")
     
     def image_callback(self, msg):
         self.latest_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
@@ -191,6 +193,7 @@ class EmptySpaceDetector:
             try:
                 transformed_pose = self.tf_buffer.transform(pose_stamp, "base_link", rospy.Duration(1.0))
                 self.empty_space_pub.publish(transformed_pose)
+                # rospy.loginfo("Published a valid empty sapce pose in base frame")
                 rospy.loginfo("Published empty space pose in base frame : " + str(transformed_pose.pose.position))
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
                 rospy.logwarn(f"Transform error: {e}")
