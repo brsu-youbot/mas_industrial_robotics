@@ -25,6 +25,7 @@
 #include <pcl_ros/transforms.h>
 #include <pcl_ros/point_cloud.h>
 
+
 #include <dynamic_reconfigure/server.h>
 
 #include <mas_perception_msgs/ObjectList.h>
@@ -112,6 +113,11 @@ class MultimodalObjectRecognitionROS
     // Publisher debug
     ros::Publisher pub_debug_cloud_plane_;
     std::string horizontal_object_list[9];
+
+    ros::Publisher pub_tr_plane_point_;
+    ros::Publisher pub_br_plane_point_;
+    ros::Publisher pub_tl_plane_point_;
+    ros::Publisher pub_bl_plane_point_;
 
     // Synchronize callback for image and pointcloud
     message_filters::Subscriber<sensor_msgs::Image> *image_sub_;

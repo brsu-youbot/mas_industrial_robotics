@@ -182,7 +182,7 @@ class PublishEmptyspacePose(smach.State):
         modified_pose = PoseStamped()
         
         # Copy the header and position from the latest pose
-        modified_pose.header = latest_empty_space_pose.header
+        modified_pose.header.frame_id = "base_link"
         modified_pose.pose.position = latest_empty_space_pose.pose.position
         
         # Copy the orientation, but set w to 1.0

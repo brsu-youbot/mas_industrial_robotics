@@ -17,40 +17,54 @@
         (at YOUBOT-BRSU START) 
         (gripper_is_free YOUBOT-BRSU) 
 
-        (on ALLENKEY-00 WS01) 
 
-        (on M20-00 WS02) 
+        (on F20_20_G-00 WS02) 
+        (on HOUSING-00 WS02) 
 
-        (on SCREWDRIVER-00 WS02) 
+        (on M30-00 WS03) 
+
+        (on SPACER-00 WS04)
+
+        (on S40_40_G-00 WS05) 
+
+        (on F20_20_B-00 WS06) 
+
+        (on M20-00 TT01) 
+        (on MOTOR2-00 TT01) 
         
-        (on HOUSING-00 WS04)
-
-        (on F20_20_G-00 WS05) 
-
-        (on WRENCH-00 WS05) 
+        (on AXIS2-00 SH01) 
+        (on WRENCH-00 SH01) 
 
         
+
         (container PP01_CAVITY-00) 
         (heavy PP01_CAVITY-00) 
         (on PP01_CAVITY-00 PP01) 
-        (is_large ALLENKEY-00) 
-        (insertable F20_20_G-00)
-        (is_big_enough PLATFORM_RIGHT) 
         
+    
+        (insertable M20-00)
+        (insertable M30-00)
+        (is_big_enough PLATFORM_RIGHT) 
     ) 
 
     (:goal 
         (and 
+            (on WRENCH-00 WS03)
+            (on F20_20_B-00 WS03)
+            
 
-            (on ALLENKEY-00 WS04) 
-            (on M20-00 WS03) 
+            (on HOUSING-00 WS01)
 
-            (on SCREWDRIVER-00 WS03) 
-            (on WRENCH-00 WS01) 
+            (on SPACER-00 WS02)
+            (on AXIS2-00 WS02)
 
-            (on HOUSING-00 SH01)
+            (on MOTOR2-00 WS06) 
 
-            (in F20_20_G-00 PP01_CAVITY-00)
+            (on F20_20_G-00 SH01) 
+            (on S40_40_G-00 SH01) 
+
+            (in M20-00 PP01_CAVITY-00) 
+            (in M30-00 PP01_CAVITY-00) 
         ) 
     ) 
 

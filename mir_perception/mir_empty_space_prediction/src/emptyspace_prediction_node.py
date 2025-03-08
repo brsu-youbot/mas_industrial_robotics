@@ -30,18 +30,30 @@ class EmptySpaceDetector:
         rospack = rospkg.RosPack()
         package_path = rospack.get_path('mir_empty_space_prediction')
 
-        self.model_path = os.path.join(package_path, "model/YOLOv8s.pt")
-        
-        # self.model_path = "/home/anudeep/b_it_bots/empty_space_models/YOLOv8s.pt"
+        self.model_path = os.path.join(package_path, "model/Yolov8s_updated.pt") # updating new model
 
-        # Use the params.yaml file to define the ROI
-        # roi_params_path = '/home/anudeep/b_it_bots/src/emptyspace_prediction/config/params.yaml'
-
+        # Load ROI parameters of all WS
         roi_params_path = os.path.join(package_path, "config/params.yaml")
 
         with open(roi_params_path, 'r') as file:
-            roi_params = yaml.safe_load(file)
-        self.roi = (roi_params['x_min'], roi_params['x_max'], roi_params['y_min'], roi_params['y_max'])
+            all_roi_params = yaml.safe_load(file)
+        
+        # get worsktation from ros param
+        self.workstation = rospy.get_param("/place_object_server/worskstation", "DEFAULT")
+
+        if self.workstation not in all_roi_params:
+            roi=all_roi_params[self.workstation]
+        else:
+            rospy.logwarn(f"Invalid workstation '{self.workstation}', defaulting to WS01")
+            roi = all_roi_params["DEFAULT"]
+
+        # with open(roi_params_path, 'r') as file:
+        #     roi_params = yaml.safe_load(file)
+
+        self.roi = (roi['x_min'], roi['x_max'], roi['y_min'], roi['y_max'])
+
+
+        # self.roi = (roi_params['x_min'], roi_params['x_max'], roi_params['y_min'], roi_params['y_max'])
 
         self.model = YOLO(self.model_path)
         
@@ -55,6 +67,9 @@ class EmptySpaceDetector:
         self.marker_pub = rospy.Publisher("/projected_point_marker", Marker, queue_size=10)
         self.debug_image_pub = rospy.Publisher("/debug_empty_space", Image, queue_size=10)
         self.empty_space_pub = rospy.Publisher("/empty_space_pose", PoseStamped, queue_size=10)
+
+        self.predictions_pub = rospy.Publisher("/empty_space_predictions", Image, queue_size=10)
+
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
@@ -90,6 +105,9 @@ class EmptySpaceDetector:
         
         results = self.model(self.latest_image)
         boxes = results[0].boxes.xyxy.cpu().numpy()
+
+        #publish all predictions 
+        self.publish_all_predictions(boxes)
         
         roi_boxes = [box for box in boxes if self.is_box_in_roi(box)]
         if not roi_boxes:
@@ -102,7 +120,12 @@ class EmptySpaceDetector:
         rospy.loginfo(f"Best empty space center: {self.center}")
         
         self.publish_debug_image()
-        self.event_pub.publish(String("e_empty_space_detected"))
+        
+        if self.center is not None:
+            self.event_pub.publish(String("e_empty_space_detected"))
+        else:
+            self.event_pub.publish(String("e_no_empty_space_detected"))
+
     
     def is_box_in_roi(self, box):
         return (box[0] >= self.roi[0] and box[2] <= self.roi[1] and
@@ -135,7 +158,34 @@ class EmptySpaceDetector:
         # Publish debug image
         debug_msg = self.bridge.cv2_to_imgmsg(debug_image, "bgr8")
         self.debug_image_pub.publish(debug_msg)
+
     
+    def publish_all_predictions(self, boxes):
+        if self.latest_image is None:
+            rospy.logwarn("No image available for visualization.")
+            return
+
+        debug_image = self.latest_image.copy()
+
+        if not boxes.any():
+            rospy.logwarn("No empty space predictions found.")
+        else:
+            for box in boxes:
+                # Draw each bounding box in green
+                cv2.rectangle(debug_image, 
+                            (int(box[0]), int(box[1])), 
+                            (int(box[2]), int(box[3])), 
+                            (0, 255, 0), 2)
+        # Draw ROI
+        cv2.rectangle(debug_image, (self.roi[0], self.roi[2]), (self.roi[1], self.roi[3]), (0, 0, 255), 2)
+
+        # Convert OpenCV image to ROS Image message
+        debug_msg = self.bridge.cv2_to_imgmsg(debug_image, "bgr8")
+
+        # Publish the debug image with all predictions
+        self.predictions_pub.publish(debug_msg)
+
+
     def project_pixel_to_pointcloud(self, cloud_msg, pixel_x, pixel_y):
         width = cloud_msg.width
         height = cloud_msg.height
@@ -189,15 +239,9 @@ class EmptySpaceDetector:
             pose_stamp.pose.position.z = z
             pose_stamp.pose.orientation.w = 1.0
 
-
-            try:
-                transformed_pose = self.tf_buffer.transform(pose_stamp, "base_link", rospy.Duration(1.0))
-                self.empty_space_pub.publish(transformed_pose)
-                # rospy.loginfo("Published a valid empty sapce pose in base frame")
-                rospy.loginfo("Published empty space pose in base frame : " + str(transformed_pose.pose.position))
-            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-                rospy.logwarn(f"Transform error: {e}")
-
+            # publishing in same camera frame
+            self.empty_space_pub.publish(pose_stamp)
+            # rospy.loginfo("Published empty space pose and orientation in camera frame : " + str(pose_stamp.pose.position))
             self.event_pub.publish(String("e_pointcloud_processed"))
         else:
             rospy.logwarn("No valid point found for the given pixel coordinates.")

@@ -230,6 +230,7 @@ class ppt_wiggle_arm(smach.State):
                 self.arm_velocity_pub.publish(message)
                 rospy.sleep(0.1)
                 current_yaw = self.current_joint_positions[-1]
+                rospy.loginfo("Current yaw: %f", current_yaw)
                 # check for timeout also and break after 5 seconds
                 # limits: 5.58 and 0.16
                 if (current_yaw >= 5.4) or (current_yaw <= 0.28):
@@ -433,7 +434,7 @@ class ppt_wiggle_arm(smach.State):
             rospy.logwarn("No object name received")
             self.object_name = "unknown"
 
-        if self.type_of_adjustment == "rotational" or self.object_name == "unknown": 
+        if self.type_of_adjustment == "rotational": 
 
             rospy.loginfo("Adjusting %s with a %s movement", self.object_name, self.type_of_adjustment)
 
@@ -722,7 +723,7 @@ def main():
         # wiggling the arm for precision placement
         smach.StateMachine.add(
             "WIGGLE_ARM",
-            ppt_wiggle_arm(wiggle_yaw=-1.57),
+            ppt_wiggle_arm(wiggle_yaw=1.57),
             transitions={
                 "succeeded": "MOVE_ARM_TO_HOLD",
                 "failed": "MOVE_ARM_TO_HOLD",

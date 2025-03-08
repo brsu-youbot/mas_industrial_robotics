@@ -38,7 +38,7 @@ class AtworkCommanderClient(object):
         self._cavity_start_code = getattr(Object, "CAVITY_START")
         self._cavity_end_code = getattr(Object, "CAVITY_END")
 
-        self._large_objects = ["allenkey"]
+        self._large_objects = ["allenkey","screwdriver"]
 
     def _timer_callback(self, event):
         self._robot_state.sender.header.stamp = rospy.Time.now()

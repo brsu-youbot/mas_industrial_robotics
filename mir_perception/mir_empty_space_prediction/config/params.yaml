@@ -1,4 +1,35 @@
-x_min : 20
-x_max : 650
-y_min : 200
-y_max : 400
+DEFAULT:
+  x_min: 10
+  x_max: 640
+  y_min: 170
+  y_max: 410
+WS01:
+  x_min: 10
+  x_max: 640
+  y_min: 170
+  y_max: 400
+WS02:
+  x_min: 10
+  x_max: 640
+  y_min: 170
+  y_max: 400
+WS03:
+  x_min: 10
+  x_max: 640
+  y_min: 170
+  y_max: 410
+WS04:
+  x_min: 10
+  x_max: 640
+  y_min: 170
+  y_max: 410
+WS05:
+  x_min: 10
+  x_max: 640
+  y_min: 170
+  y_max: 410
+WS06:
+  x_min: 8
+  x_max: 640
+  y_min: 160
+  y_max: 380

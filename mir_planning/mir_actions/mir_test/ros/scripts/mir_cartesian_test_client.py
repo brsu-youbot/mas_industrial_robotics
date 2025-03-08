@@ -23,7 +23,7 @@ if __name__ == "__main__":
             obj = "M20"
     else:
         obj = "M20"
-        location = "WS01"
+        location = "WS02"
 
     goal = GenericExecuteGoal()
     goal.parameters.append(KeyValue(key="platform", value="PLATFORM_MIDDLE"))

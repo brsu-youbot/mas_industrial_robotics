@@ -9,9 +9,9 @@ from diagnostic_msgs.msg import KeyValue
 from mir_planning_msgs.msg import GenericExecuteAction, GenericExecuteGoal
 
 if __name__ == "__main__":
-    rospy.init_node("place_object_client_tester")
+    rospy.init_node("mir_end_orn_client")
 
-    client = SimpleActionClient("place_object_server", GenericExecuteAction)
+    client = SimpleActionClient("mir_end_orn_server", GenericExecuteAction)
     client.wait_for_server()
     print("Server found")
 
@@ -23,7 +23,7 @@ if __name__ == "__main__":
             obj = "M20"
     else:
         obj = "M20"
-        location = "WS01"
+        location = "WS02"
 
     goal = GenericExecuteGoal()
     goal.parameters.append(KeyValue(key="platform", value="PLATFORM_MIDDLE"))
@@ -32,8 +32,6 @@ if __name__ == "__main__":
 
     rospy.loginfo("Sending following goal to place object server")
     rospy.loginfo(goal)
-
-    rospy.set_param("worskstation", location)
 
     client.send_goal(goal)
 

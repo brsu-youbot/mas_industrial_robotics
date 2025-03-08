@@ -36,6 +36,9 @@ from sensor_msgs.msg import JointState
 import numpy as np
 import tf
 
+import tf2_ros
+import tf2_geometry_msgs
+
 # Global variable to store the latest pose from the topic
 latest_empty_space_pose = None
 
@@ -44,7 +47,7 @@ class MoveArmUp(smach.State):
     def __init__(self):
         smach.State.__init__(
             self,
-            outcomes=["succeeded", "timeout"],
+            outcomes=["success", "failed"],
         )
         self.joint_states_sub = rospy.Subscriber("/joint_states", JointState, self.joint_states_cb)
         self.pub_arm_position = rospy.Publisher("/arm_1/arm_controller/position_command", JointPositions, queue_size=1)
@@ -88,35 +91,98 @@ class MoveArmUp(smach.State):
         ]
         self.pub_arm_position.publish(joint_positions)
         rospy.sleep(1)
-        return "succeeded"
+        return "success"
+
 
 # ===============================================================================
 # by Annudeep
+
+class MoveDBCPose(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=["succeeded"])
+        self._dbc_pose_pub = rospy.Publisher(
+            "/mcr_navigation/direct_base_controller/input_pose",
+            PoseStamped,
+            queue_size=1,
+        )
+        self.last_pose = None
+        self.sub = rospy.Subscriber("/wbc/base_motion_pose", PoseStamped, self.pose_cb)
+        self.listener = tf.TransformListener()  # INITIALIZE LISTENER
+
+    def pose_cb(self, msg):
+        self.last_pose = msg
+
+    def execute(self, userdata):
+        try:
+            # Get pose from WBC
+            if self.last_pose is None:
+                rospy.logwarn("No cached WBC pose, waiting...")
+                incoming_pose = rospy.wait_for_message("/wbc/base_motion_pose", PoseStamped, timeout=rospy.Duration(1.0))
+            else:
+                incoming_pose = self.last_pose
+
+            # Get current base orientation from TF
+            tf_msg = self.listener.lookupTransform("/base_link_static", "/base_link", rospy.Time(0))
+
+            # Build modified pose
+            modified_pose = PoseStamped()
+            modified_pose.header.frame_id = "base_link_static"  # CORRECT HEADER
+            modified_pose.header.stamp = rospy.Time.now()
+            modified_pose.pose.position.x =tf_msg[0][0] + (-incoming_pose.pose.position.x)
+            modified_pose.pose.position.y =tf_msg[0][1] + (-incoming_pose.pose.position.y)
+            modified_pose.pose.position.z = tf_msg[0][2]
+            modified_pose.pose.orientation.x = tf_msg[1][0]
+            modified_pose.pose.orientation.y = tf_msg[1][1]
+            modified_pose.pose.orientation.z = tf_msg[1][2]
+            modified_pose.pose.orientation.w = tf_msg[1][3]
+
+            self._dbc_pose_pub.publish(modified_pose)
+            return "succeeded"
+
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
+            rospy.logerr("TF error in MoveDBC: %s", str(e))
+            return "succeeded"
+        except rospy.ROSException as e:
+            rospy.logerr("ROS error in MoveDBC: %s", str(e))
+            return "succeeded"
+
 
 class TriggerEmptySpaceDetection(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
         self.trigger_pub = rospy.Publisher('/empty_space_detector/event_in', String, queue_size=10)
         self.event_sub = rospy.Subscriber('/empty_space_detector/event_out', String, self.event_callback)
-        self.event_received = False
+        self.event_received = None  # Track received event type
 
     def event_callback(self, msg):
+        """
+        Callback to handle the event_out messages from the empty space detector.
+        """
         if msg.data == "e_empty_space_detected":
-            self.event_received = True
+            self.event_received = "success"
+        elif msg.data == "e_no_empty_space_detected":
+            self.event_received = "failure"
 
     def execute(self, userdata):
-        self.event_received = False
+        """
+        Executes the state: 
+        - Triggers the empty space detection.
+        - Waits for a response (success or failure).
+        - Returns 'succeeded' if empty space is found.
+        - Returns 'failed' if no empty space is detected or timeout occurs.
+        """
+        self.event_received = None  # Reset event flag
         self.trigger_pub.publish(String("e_empty"))
-        
-        timeout = rospy.Duration(10.0)  # 10 seconds timeout
+
+        timeout = rospy.Duration(5.0)  # Change this value as needed
         start_time = rospy.Time.now()
-        
-        while not self.event_received and (rospy.Time.now() - start_time) < timeout:
-            rospy.sleep(0.1)
-        
-        if self.event_received:
+
+        while self.event_received is None and (rospy.Time.now() - start_time) < timeout:
+            rospy.sleep(0.1)  # Small delay to prevent CPU overload
+
+        if self.event_received == "success":
             return 'succeeded'
-        else:
+        else:  # If "failure" or timeout occurs
             return 'failed'
 
 class TriggerPointCloudProcessing(smach.State):
@@ -133,17 +199,11 @@ class TriggerPointCloudProcessing(smach.State):
     def execute(self, userdata):
         self.event_received = False
         self.trigger_pub.publish(String("e_cloud"))
-        
-        timeout = rospy.Duration(5.0)  # 5 seconds timeout
+        timeout = rospy.Duration(5.0)
         start_time = rospy.Time.now()
-        
         while not self.event_received and (rospy.Time.now() - start_time) < timeout:
             rospy.sleep(0.1)
-        
-        if self.event_received:
-            return 'succeeded'
-        else:
-            return 'failed'
+        return 'succeeded' if self.event_received else 'failed'
 
 class SendStopEvent(smach.State):
     def __init__(self):
@@ -152,69 +212,76 @@ class SendStopEvent(smach.State):
 
     def execute(self, userdata):
         self.stop_pub.publish(String("e_stop"))
-        rospy.sleep(0.1)  # Small delay to ensure the message is sent
+        rospy.sleep(0.1)
         return 'succeeded'
 
-
-class PublishEmptyspacePose(smach.State):
+class PublishEmptyspacePosetoBaseStatic(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=["success", "failed"],
+        smach.State.__init__(self, outcomes=["nor_success", "wbc_success", "failed"],
                                     input_keys=["goal"],
                                     output_keys=["move_arm_to"])
 
-        self.empty_space_pose = rospy.Publisher(
+        self.empty_space_pose_pub = rospy.Publisher(
             "mcr_perception/object_selector/output/object_pose",
             PoseStamped,
             queue_size=10)
-    
+
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
     def pose_callback(self, msg):
         self.received_pose = msg
 
     def execute(self, userdata):
-        global latest_empty_space_pose
-
         self.received_pose = None
         sub = rospy.Subscriber("/empty_space_pose", PoseStamped, self.pose_callback)
-
+        
         timeout = rospy.Duration(5.0)  # 5 seconds timeout
         start_time = rospy.Time.now()
-
+        
         while self.received_pose is None and (rospy.Time.now() - start_time) < timeout:
             rospy.sleep(0.1)
         
-        sub.unregister() # Unsubscribe from the topic after receiving the pose
-
-        latest_empty_space_pose = self.received_pose
-
+        sub.unregister()  # Unsubscribe from the topic after receiving the pose
         
-        if latest_empty_space_pose is None:
+        if self.received_pose is None:
             rospy.logerr("No pose received from /empty_space_pose topic")
             return "failed"
-
-        # Create a new PoseStamped message
-        modified_pose = PoseStamped()
         
-        # Copy the header and position from the latest pose
-        modified_pose.header = latest_empty_space_pose.header
-        modified_pose.pose.position = latest_empty_space_pose.pose.position
+        try:
+            # Lookup transform from the pose's frame to base_static_link
+            transform = self.tf_buffer.lookup_transform(
+                "base_link_static",  # Target frame
+                self.received_pose.header.frame_id,  # Source frame
+                rospy.Time(0),  # Get the latest available transform
+                rospy.Duration(1.0)  # Timeout for transform availability
+            )
+            
+            # Transform pose to base_static_link frame
+            transformed_pose = tf2_geometry_msgs.do_transform_pose(self.received_pose, transform)
+
+            # Set the orientation to a "straight" predefined quaternion
+            transformed_pose.pose.orientation.x = 0.0
+            transformed_pose.pose.orientation.y = 0.0
+            transformed_pose.pose.orientation.z = 0.0
+            transformed_pose.pose.orientation.w = 1.0  # Identity quaternion
+
+            rospy.loginfo("Transformed pose: %s" % transformed_pose)
+            
+            # Publish the transformed pose
+            self.empty_space_pose_pub.publish(transformed_pose)
+            
+            # Check the y value of the transformed pose
+            y_value = transformed_pose.pose.position.y
+            
+            if -0.05 <= y_value <= 0.1:
+                return "nor_success"
+            else:
+                return "wbc_success"
         
-        # Copy the orientation, but set w to 1.0
-        # modified_pose.pose.orientation.x = latest_empty_space_pose.pose.orientation.x
-        # modified_pose.pose.orientation.y = latest_empty_space_pose.pose.orientation.y
-        # modified_pose.pose.orientation.z = latest_empty_space_pose.pose.orientation.z
-        # modified_pose.pose.orientation.w = 1.0
-
-        modified_pose.pose.orientation.x = 0.0
-        modified_pose.pose.orientation.y = 0.0
-        modified_pose.pose.orientation.z = 0.0
-        modified_pose.pose.orientation.w = 1.0
-
-        self.empty_space_pose.publish(modified_pose)
-
-        # self.empty_space_pose.publish(latest_empty_space_pose)
-        return "success"
-    
+        except (tf2_ros.LookupException, tf2_ros.ExtrapolationException, tf2_ros.ConnectivityException) as e:
+            rospy.logerr("Failed to transform pose: %s" % str(e))
+            return "failed"
 
 
 # ===============================================================================
@@ -232,6 +299,7 @@ class DefineShelfPlacePose(smach.State):
 
     def execute(self, userdata):
         location = Utils.get_value_of(userdata.goal.parameters, "location")
+
         try:
             if location == "SH01":
                 if len(self.pose_list_sh01) > 0:
@@ -270,6 +338,8 @@ class CheckIfLocationIsShelf(smach.State):
     def execute(self, userdata):
         location = Utils.get_value_of(userdata.goal.parameters, "location")
         print("[Place Object Server] Location received : ", location)
+        
+
         if (location == "SH01") or (location == "SH02"):
             return "shelf"
         else:       
@@ -455,6 +525,7 @@ def start_cb(*args, **kwargs):
     userdata.feedback = feedback
 
 
+
 def main():
     rospy.init_node("place_object_server")
     # Construct state machine
@@ -592,12 +663,20 @@ def main():
                          "timeout": "MOVE_ARM_SAFE"}
         )
 
+        # smach.StateMachine.add(
+        #     "MOVE_ARM_SAFE",
+        #     MoveArmUp(),
+        #     transitions={"succeeded": "MOVE_ARM_TO_SHELF_INTERMEDIATE_RETRACT",
+        #                  "timeout": "MOVE_ARM_TO_SHELF_INTERMEDIATE_RETRACT"}
+        # )
+
         smach.StateMachine.add(
             "MOVE_ARM_SAFE",
             MoveArmUp(),
-            transitions={"succeeded": "MOVE_ARM_TO_SHELF_INTERMEDIATE_RETRACT",
-                         "timeout": "MOVE_ARM_TO_SHELF_INTERMEDIATE_RETRACT"}
+            transitions={"success": "MOVE_ARM_TO_SHELF_INTERMEDIATE_RETRACT",
+                        "failed": "MOVE_ARM_TO_SHELF_INTERMEDIATE_RETRACT"}
         )
+
 
 
         smach.StateMachine.add(
@@ -645,85 +724,141 @@ def main():
 # below states are for empty space placing, Anudeep
 
         smach.StateMachine.add(
-                "TRIGGER_EMPTY_SPACE_DETECTION",
-                TriggerEmptySpaceDetection(),
-                transitions={
-                    "succeeded": "TRIGGER_POINT_CLOUD_PROCESSING",
-                    # "failed": "OVERALL_FAILED",
-                    "failed": "START_PLACE_POSE_SELECTOR",
-                },
-            )
+            "TRIGGER_EMPTY_SPACE_DETECTION",
+            TriggerEmptySpaceDetection(),
+            transitions={"succeeded": "TRIGGER_POINT_CLOUD_PROCESSING", "failed": "START_PLACE_POSE_SELECTOR"},
+        )
 
         smach.StateMachine.add(
             "TRIGGER_POINT_CLOUD_PROCESSING",
             TriggerPointCloudProcessing(),
-            transitions={
-                "succeeded": "PUBLISH_OBJECT_POSE",
-                "failed": "OVERALL_FAILED",
-            },
+            transitions={"succeeded": "PUBLISH_REFERENCE_FRAME_EMP", "failed": "START_PLACE_POSE_SELECTOR"},
         )
 
         smach.StateMachine.add(
-            "PUBLISH_OBJECT_POSE",
-            PublishEmptyspacePose(),
-            transitions={
-                "success": "CHECK_PLACE_POSE_IK",
-                "failed": "PUBLISH_OBJECT_POSE",
-            },
+            "PUBLISH_REFERENCE_FRAME_EMP",
+            gbs.send_event([("/static_transform_publisher_node/event_in", "e_start")]),
+            transitions={"success": "PUBLISH_OBJECT_POSE_AS_STATIC"},
         )
+
         
         smach.StateMachine.add(
-            "CHECK_PLACE_POSE_IK",
-            gbs.send_and_wait_events_combined(
-                event_in_list=[
-                    ("/pregrasp_planner_node/event_in", "e_start")
-                ],
-                event_out_list=[
-                    (
-                        "/pregrasp_planner_node/event_out",
-                        "e_success",
-                        True,
-                    )
-                ],
-                timeout_duration=20,
-            ),
-            transitions={
-                "success": "GO_TO_PLACE_POSE",
-                "timeout": "CHECK_PLACE_POSE_IK", 
-                "failure": "OVERALL_FAILED",
+            "PUBLISH_OBJECT_POSE_AS_STATIC",
+            PublishEmptyspacePosetoBaseStatic(),
+            transitions={ 
+                "wbc_success": "SET_DBC_PARAMS_EMP",
+                "nor_success": "CHECK_PICK_POSE_IK",
+                "failed": "START_PLACE_POSE_SELECTOR"
             },
         )
 
+        # WBC placing
+
         smach.StateMachine.add(
-            "GO_TO_PLACE_POSE",
-            gbs.send_and_wait_events_combined(
-                event_in_list=[
-                    ("/waypoint_trajectory_generation/event_in", "e_start")],
-                event_out_list=[
-                    (
-                        "/waypoint_trajectory_generation/event_out",
-                        "e_success",
-                        True,
-                    )],
-                timeout_duration=20,
-            ),
+            "SET_DBC_PARAMS_EMP",
+            gbs.set_named_config("dbc_pick_object"),
             transitions={
-                # "success": "OPEN_GRIPPER", 
-                "success": "SEND_STOP_EVENT",
+                "success": "SEND_STOP_EVENT_WBC",
                 "timeout": "OVERALL_FAILED",
                 "failure": "OVERALL_FAILED",
             },
         )
 
         smach.StateMachine.add(
-            "SEND_STOP_EVENT",
+            "SEND_STOP_EVENT_WBC",
             SendStopEvent(),
+            transitions={"succeeded": "MOVE_ROBOT_AND_TRY_PLACING"},
+        )
+
+        smach.StateMachine.add(
+            "MOVE_ROBOT_AND_TRY_PLACING",
+            gbs.send_and_wait_events_combined(
+                event_in_list=[("/wbc/event_in", "e_start")],
+                event_out_list=[("/wbc/event_out", "e_success", True)],
+                timeout_duration=50,
+            ),
             transitions={
-                "succeeded": "RELEASE_GRIPPER",
+                "success": "RELEASE_GRIPPER_WBC",
+                "timeout": "STOP_MOVE_ROBOT_TO_OBJECT_WITH_FAILURE",
+                "failure": "STOP_MOVE_ROBOT_TO_OBJECT_WITH_FAILURE",
             },
         )
 
-    
+        smach.StateMachine.add(
+            "STOP_MOVE_ROBOT_TO_OBJECT_WITH_FAILURE",
+            gbs.send_event(
+                [
+                    ("/waypoint_trajectory_generation/event_in", "e_stop"),
+                    ("/wbc/event_in", "e_stop"),
+                ]
+            ),
+            transitions={"success": "CHECK_PICK_POSE_IK"},
+        )
+
+        smach.StateMachine.add(
+            "RELEASE_GRIPPER_WBC",
+            gms.control_gripper('release'),
+            transitions={"succeeded": "MOVE_ARM_UP_WBC", "timeout": "MOVE_ARM_UP_WBC"},
+        )
+
+        smach.StateMachine.add(
+            "MOVE_ARM_UP_WBC",
+            MoveArmUp(),
+            transitions={"success": "MOVE_ARM_TO_NEUTRAL_WBC", "failed": "MOVE_ARM_TO_NEUTRAL"},
+        )
+
+        smach.StateMachine.add(
+            "MOVE_ARM_TO_NEUTRAL_WBC",
+            gms.move_arm("pre_place", use_moveit=False),
+            transitions={"succeeded": "OPEN_GRIPPER", "failed": "MOVE_ARM_TO_NEUTRAL"},
+        )
+
+        # smach.StateMachine.add(
+        #     "MOVE_DBC_IN_Y",
+        #     MoveDBCPose(),
+        #     transitions={"succeeded": "MOVE_BASE_USING_WBC"},
+        # )
+
+        # smach.StateMachine.add(
+        #     "MOVE_BASE_USING_WBC",
+        #     gbs.send_and_wait_events_combined(
+        #         event_in_list=[("/mcr_navigation/direct_base_controller/coordinator/event_in", "e_start")],
+        #         event_out_list=[("/mcr_navigation/direct_base_controller/coordinator/event_out", "e_success", True)],
+        #         timeout_duration=10,
+        #     ),
+        #     transitions={"success": "OPEN_GRIPPER", "timeout": "OVERALL_FAILED", "failure": "OVERALL_FAILED"},
+        # )
+
+        # IK
+
+        smach.StateMachine.add(
+            "CHECK_PICK_POSE_IK",
+            gbs.send_and_wait_events_combined(
+                event_in_list=[("/pregrasp_planner_node/event_in", "e_start")],
+                event_out_list=[("/pregrasp_planner_node/event_out", "e_success", True)],
+                timeout_duration=20,
+            ),
+            transitions={"success": "SEND_STOP_EVENT_NO_WBC", "timeout": "CHECK_PICK_POSE_IK", "failure": "OVERALL_FAILED"},
+        )
+
+        smach.StateMachine.add(
+            "SEND_STOP_EVENT_NO_WBC",
+            SendStopEvent(),
+            transitions={"succeeded": "GO_TO_PICK_POSE"},
+        )
+
+        smach.StateMachine.add(
+            "GO_TO_PICK_POSE",
+            gbs.send_and_wait_events_combined(
+                event_in_list=[("/waypoint_trajectory_generation/event_in", "e_start")],
+                event_out_list=[("/waypoint_trajectory_generation/event_out", "e_success", True)],
+                timeout_duration=20,
+            ),
+            transitions={"success": "RELEASE_GRIPPER", "timeout": "OVERALL_FAILED", "failure": "OVERALL_FAILED"},
+        )
+
+
+  
     # ===============================================================================
 
     # below are state for default placing, Anudeep
@@ -789,8 +924,8 @@ def main():
                 "MOVE_ARM_UP",
                 MoveArmUp(),
                 transitions={
-			        "succeeded": "MOVE_ARM_TO_NEUTRAL",
-                                 "timeout": "MOVE_ARM_TO_NEUTRAL"}
+			        "success": "MOVE_ARM_TO_NEUTRAL",
+                                 "failed": "MOVE_ARM_TO_NEUTRAL"}
         )
 
 

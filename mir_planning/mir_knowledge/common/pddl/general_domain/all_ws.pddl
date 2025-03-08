@@ -17,40 +17,60 @@
         (at YOUBOT-BRSU START) 
         (gripper_is_free YOUBOT-BRSU) 
 
-        (on ALLENKEY-00 WS01) 
+        (on F20_20_B-00 WS01) 
+        (on HOUSING-00 WS02) 
+
+        (on M30-00 WS03) 
+        
+        (on SCREWDRIVER-00 WS04)
+
+        (on S40_40_G-00 WS05) 
+
+        (on F20_20_G-00 WS06) 
 
         (on M20-00 WS02) 
-
-        (on SCREWDRIVER-00 WS02) 
+        (on M20_100-00 WS04) 
         
-        (on HOUSING-00 WS04)
+        (on AXIS2-00 SH01) 
+        (on DRILL-00 SH01) 
 
-        (on F20_20_G-00 WS05) 
-
-        (on WRENCH-00 WS05) 
-
-        
+        (on CONTAINER_BOX_RED-00 WS03) 
+        (on CONTAINER_BOX_BLUE-00 WS02) 
+        (container CONTAINER_BOX_RED-00) 
+        (heavy CONTAINER_BOX_RED-00) 
+        (container CONTAINER_BOX_BLUE-00) 
+        (heavy CONTAINER_BOX_BLUE-00) 
         (container PP01_CAVITY-00) 
         (heavy PP01_CAVITY-00) 
         (on PP01_CAVITY-00 PP01) 
         (is_large ALLENKEY-00) 
-        (insertable F20_20_G-00)
+        (is_large SCREWDRIVER-00)
+        (is_large DRILL-00)
+        (insertable M20_100-00)
+        (insertable M30-00)
         (is_big_enough PLATFORM_RIGHT) 
-        
     ) 
 
     (:goal 
         (and 
 
-            (on ALLENKEY-00 WS04) 
-            (on M20-00 WS03) 
+            (on HOUSING-00 WS01)
 
-            (on SCREWDRIVER-00 WS03) 
-            (on WRENCH-00 WS01) 
+            (on SCREWDRIVER-00 WS02)
 
-            (on HOUSING-00 SH01)
+            (on F20_20_B-00 WS03)
 
-            (in F20_20_G-00 PP01_CAVITY-00)
+            (on AXIS2-00 WS04)
+
+            (on DRILL-00 WS05)
+
+            (on M20-00 WS06) 
+
+            (on F20_20_G-00 SH01) 
+            (on S40_40_G-00 SH01) 
+
+            (in M20_100-00 PP01_CAVITY-00) 
+            (in M30-00 PP01_CAVITY-00) 
         ) 
     ) 
 
@@ -58,4 +78,4 @@
         (total-cost) 
     ) 
 
-) 
+)

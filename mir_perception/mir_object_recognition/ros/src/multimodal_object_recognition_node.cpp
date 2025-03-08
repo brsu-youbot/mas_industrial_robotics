@@ -10,6 +10,9 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
+#include <pcl/point_types.h>
+#include <pcl/point_types.h>
+
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -18,6 +21,7 @@
 #include <std_msgs/String.h>
 #include <std_msgs/Float64.h>
 #include <geometry_msgs/PoseArray.h>
+#include <geometry_msgs/PointStamped.h>
 
 #include <mas_perception_msgs/ImageList.h>
 #include <mas_perception_msgs/BoundingBoxList.h>
@@ -82,6 +86,11 @@ MultimodalObjectRecognitionROS::MultimodalObjectRecognitionROS(ros::NodeHandle n
 
   // Pub workspace height
   pub_workspace_height_ = nh_.advertise<std_msgs::Float64>("output/workspace_height", 1);
+
+  pub_tr_plane_point_ = nh_.advertise<geometry_msgs::PointStamped>("output/tr_plane_point", 1);  
+  pub_tl_plane_point_ = nh_.advertise<geometry_msgs::PointStamped>("output/tl_plane_point", 1);  
+  pub_br_plane_point_ = nh_.advertise<geometry_msgs::PointStamped>("output/br_plane_point", 1);  
+  pub_bl_plane_point_ = nh_.advertise<geometry_msgs::PointStamped>("output/bl_plane_point", 1);  
 
   // debug topics
   pub_debug_cloud_plane_ = nh_.advertise<sensor_msgs::PointCloud2>("output/debug_cloud_plane", 1);
@@ -214,10 +223,65 @@ void MultimodalObjectRecognitionROS::segmentPointCloud(mas_perception_msgs::Obje
   workspace_height_msg.data = scene_segmentation_ros_->getWorkspaceHeight();
   pub_workspace_height_.publish(workspace_height_msg);
 
+  PointCloud::Ptr cloud_debug(new PointCloud);
+  cloud_debug = scene_segmentation_ros_->getCloudDebug();
+
+    // // ToDo: Chaitanya, move this out of debug and apply filter 
+  pcl::PointXYZRGB min_pt;
+  pcl::PointXYZRGB max_pt;
+  pcl::getMinMax3D(*cloud_debug, min_pt, max_pt);
+  std::cout<<"min x: "<<min_pt.x<<" miny: "<<min_pt.y<<" min z: "<<min_pt.z<<std::endl;
+  std::cout<<"max x: "<<max_pt.x<<" maxy: "<<max_pt.y<<" max z: "<<max_pt.z<<std::endl;
+
+  geometry_msgs::PointStamped tr_plane_point;
+  tr_plane_point.header.frame_id = target_frame_id_;
+  tr_plane_point.header.stamp = ros::Time::now();
+  tr_plane_point.point.x = max_pt.x;
+  tr_plane_point.point.y = max_pt.y;
+  tr_plane_point.point.z = min_pt.z;
+  pub_tr_plane_point_.publish(tr_plane_point);
+
+  geometry_msgs::PointStamped tl_plane_point;
+  tl_plane_point.header.frame_id = target_frame_id_;
+  tl_plane_point.header.stamp = ros::Time::now();
+  tl_plane_point.point.x = min_pt.x;
+  tl_plane_point.point.y = max_pt.y;
+  tl_plane_point.point.z = min_pt.z;
+  pub_tl_plane_point_.publish(tl_plane_point);
+
+  geometry_msgs::PointStamped br_plane_point;
+  br_plane_point.header.frame_id = target_frame_id_;
+  br_plane_point.header.stamp = ros::Time::now();
+  br_plane_point.point.x = max_pt.x;
+  br_plane_point.point.y = min_pt.y;
+  br_plane_point.point.z = min_pt.z;
+  pub_br_plane_point_.publish(br_plane_point);
+
+  geometry_msgs::PointStamped bl_plane_point;
+  bl_plane_point.header.frame_id = target_frame_id_;
+  bl_plane_point.header.stamp = ros::Time::now();
+  bl_plane_point.point.x = min_pt.x;
+  bl_plane_point.point.y = min_pt.y;
+  bl_plane_point.point.z = min_pt.z;
+  pub_bl_plane_point_.publish(bl_plane_point);
+  
+  // corners.push_back(pcl::PointXYZ(minPt.x, minPt.y, minPt.z)); // Bottom-left
+  // corners.push_back(pcl::PointXYZ(minPt.x, maxPt.y, minPt.z)); // Top-left
+  // corners.push_back(pcl::PointXYZ(maxPt.x, minPt.y, minPt.z)); // Bottom-right
+  // corners.push_back(pcl::PointXYZ(maxPt.x, maxPt.y, minPt.z)); // Top-right
+
   if (debug_mode_)
   {
     PointCloud::Ptr cloud_debug(new PointCloud);
     cloud_debug = scene_segmentation_ros_->getCloudDebug();
+
+    // // ToDo: Chaitanya, move this out of debug and apply filter 
+    // pcl::PointXYZRGB min_pt;
+    // pcl::PointXYZRGB max_pt;
+    // pcl::getMinMax3D(*cloud_debug, min_pt, max_pt);
+    // std::cout<<"min x: "<<min_pt.x<<" miny: "<<min_pt.y<<" min z: "<<min_pt.z<<std::endl;
+    // std::cout<<"max x: "<<max_pt.x<<" maxy: "<<max_pt.y<<" max z: "<<max_pt.z<<std::endl;
+
     sensor_msgs::PointCloud2 ros_pc2;
     pcl::toROSMsg(*cloud_debug, ros_pc2);
     ros_pc2.header.frame_id = target_frame_id_;
@@ -1109,7 +1173,7 @@ void MultimodalObjectRecognitionROS::configCallback(mir_object_recognition::Scen
       config.passthrough_filter_field_name,
       config.passthrough_filter_limit_min,
       config.passthrough_filter_limit_max);
-  scene_segmentation_ros_->setCropBoxParams(config.enable_cropbox_filter, config.cropbox_filter_min_x, config.cropbox_filter_max_x,
+  scene_segmentation_ros_->setCropBoxParams(config.enable_cropbox_filter, config.cropbox_filter_on_plane, config.cropbox_filter_min_x, config.cropbox_filter_max_x,
       config.cropbox_filter_min_y, config.cropbox_filter_max_y, config.cropbox_filter_min_z, config.cropbox_filter_max_z);
   scene_segmentation_ros_->setNormalParams(config.normal_radius_search, config.use_omp, config.num_cores);
   Eigen::Vector3f axis(config.sac_x_axis, config.sac_y_axis, config.sac_z_axis);
