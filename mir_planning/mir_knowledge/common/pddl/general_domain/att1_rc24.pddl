@@ -48,9 +48,9 @@
             (on SCREWDRIVER-00 WS03) 
             (on WRENCH-00 WS01) 
 
-            (on HOUSING-00 SH01)
+            (on HOUSING-00 WS01) 
 
-            (in F20_20_G-00 PP01_CAVITY-00)
+            (in F20_20_G-00 PP01_CAVITY-00) 
         ) 
     ) 
 

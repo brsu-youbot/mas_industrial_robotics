@@ -32,8 +32,9 @@ if __name__ == "__main__":
 
     rospy.loginfo("Sending following goal to place object server")
     rospy.loginfo(goal)
+    print
 
-    rospy.set_param("worskstation", location)
+    rospy.set_param("/place_object_server/worskstation", location)
 
     client.send_goal(goal)
 

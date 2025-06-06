@@ -499,7 +499,7 @@ class RTTObjectTracker():
                                         self.object_pose[label].header.frame_id = "base_link"
                                         self.object_pose[label].pose.position.x = closest_x
                                         self.object_pose[label].pose.position.y = closest_y
-                                        self.object_pose[label].pose.position.z = 0.009 # prev 0.010
+                                        self.object_pose[label].pose.position.z = 0.004 # prev 0.010
                                         
                                         
                                         # TODO: Object position height (0.010 for C069 lab) is added as fixed value. Write a method to get RTT table height.

@@ -160,6 +160,7 @@
     </include> -->
 
     <!-- Empty space predictor -->
+
     <include file = "$(find mir_empty_space_prediction)/launch/empty_space_predictor.launch">
     </include>
 

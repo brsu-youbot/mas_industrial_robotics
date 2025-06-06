@@ -41,7 +41,7 @@ class SelectCavity(smach.State):
         matchings = {
             "M20": ["M20_H", "M20_V"],
             "M30": ["M30_H", "M30_V"],
-            "M20_100": ["M20_100_H", "M20_H"],
+            "M20_100": ["M20_100_H", "M20_100_V"],
             "F20_20_B": ["F20_20_H", "F20_20_V"],
             "F20_20_G": ["F20_20_H", "F20_20_V"],
             "S40_40_B": ["S40_40_H", "S40_40_V"],
@@ -658,21 +658,21 @@ def main():
             "SET_DBC_PARAMS",
             gbs.set_named_config("dbc_pick_object"),
             transitions={
-                "success": "ARM_SAFE",
+                "success": "MOVE_ROBOT_AND_TRY_INSERTING",
                 "timeout": "OVERALL_FAILED",
                 "failure": "OVERALL_FAILED",
             },
         )
 
         #safety
-        smach.StateMachine.add(
-            "ARM_SAFE",
-            ArmSafe(),
-            transitions={
-                "success":"MOVE_ROBOT_AND_TRY_INSERTING", 
-                "failed":"OVERALL_FAILED",
-            },
-        )
+        # smach.StateMachine.add(
+        #     "ARM_SAFE",
+        #     ArmSafe(),
+        #     transitions={
+        #         "success":"MOVE_ROBOT_AND_TRY_INSERTING", 
+        #         "failed":"OVERALL_FAILED",
+        #     },
+        # )
 
         smach.StateMachine.add(
             "MOVE_ROBOT_AND_TRY_INSERTING",

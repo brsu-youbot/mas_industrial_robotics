@@ -39,6 +39,8 @@ import tf
 import tf2_ros
 import tf2_geometry_msgs
 
+import random
+
 # Global variable to store the latest pose from the topic
 latest_empty_space_pose = None
 
@@ -294,21 +296,21 @@ class DefineShelfPlacePose(smach.State):
                              input_keys=["goal"],
                              output_keys=['move_arm_to'])
         self.pose_list_sh01 = ["shelf_place_1", "shelf_place_2"]
-        self.pose_list_sh02 = ["shelf_place_1", "shelf_place_2"]
+        self.pose_list_sh02 = ["shelf_place_sh2_1", "shelf_place_sh2_2"]
         # self.pose_list_sh02 = ["shelf_place_3", "shelf_place_4"]
 
     def execute(self, userdata):
         location = Utils.get_value_of(userdata.goal.parameters, "location")
 
         try:
-            if location == "SH01":
+            if location == "SH1":
                 if len(self.pose_list_sh01) > 0:
                     rospy.logwarn("Getting shelf place pose from list")
                     userdata.move_arm_to = self.pose_list_sh01.pop()
                 else:
                     rospy.logfatal("No more shelf place pose in list, so using default pose")
                     userdata.move_arm_to = "shelf_place_final"
-            elif location == "SH02":
+            elif location == "SH2":
                 if len(self.pose_list_sh02) > 0:
                     rospy.logwarn("Getting shelf place pose from list")
                     userdata.move_arm_to = self.pose_list_sh02.pop()
@@ -340,7 +342,7 @@ class CheckIfLocationIsShelf(smach.State):
         print("[Place Object Server] Location received : ", location)
         
 
-        if (location == "SH01") or (location == "SH02"):
+        if (location == "SH1") or (location == "SH2"):
             return "shelf"
         else:       
             return "not_shelf"
@@ -442,9 +444,21 @@ class DefalutSafePose(smach.State):
         rospy.logwarn("Checking pre-defined safe pose")
         location = Utils.get_value_of(userdata.goal.parameters, "location")
         current_platform_height = rospy.get_param("/"+location)
-        userdata.move_arm_to = str(str(current_platform_height)+'pose4cm/')
-        print("from place server ========")
-        print(userdata.move_arm_to)
+        
+        # Randomly select a pose from pose1 to pose4
+        random_pose_index = random.randint(1, 3)  # Generates a number between 1 and 4
+        selected_pose = f"pose{random_pose_index}"
+        
+        # userdata.move_arm_to = str(str(current_platform_height)+'pose4cm/')
+        # print("from place server ========")
+        
+        # Construct the target pose string
+        userdata.move_arm_to = f"{current_platform_height}cm/{selected_pose}"
+
+        rospy.loginfo(f"Selected pose: {userdata.move_arm_to}")
+        
+        
+        # print(userdata.move_arm_to)
         rospy.sleep(0.1)
         return "succeeded"
 

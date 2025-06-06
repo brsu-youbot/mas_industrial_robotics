@@ -17,11 +17,11 @@
         (at YOUBOT-BRSU START) 
         (gripper_is_free YOUBOT-BRSU) 
 
-        (on F20_20_G-00 WS02) 
+        (on F20_20_G-00 WS01) 
 
-        (on M20-00 WS02)
+        (on M20-00 WS01)
 
-        (on M20_100-00 WS02)
+        (on M20_100-00 WS01)
     ) 
 
     (:goal 

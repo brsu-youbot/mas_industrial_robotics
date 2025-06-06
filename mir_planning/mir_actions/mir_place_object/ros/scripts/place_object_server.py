@@ -35,6 +35,7 @@ from brics_actuator.msg import JointPositions, JointValue
 from sensor_msgs.msg import JointState
 import numpy as np
 import tf
+import random
 
 class MoveArmUp(smach.State):
 
@@ -230,6 +231,23 @@ class GetPoseToPlaceOject(smach.State):  # inherit from the State base class
 # ===============================================================================
 
 
+# class DefalutSafePose(smach.State):
+#     def __init__(self):
+#         smach.State.__init__(self, outcomes=["succeeded", "failed"],
+#                                     input_keys=["goal","move_arm_to"],
+#                                     output_keys=["move_arm_to"])
+
+#     def execute(self, userdata):
+
+#         rospy.logwarn("Checking pre-defined safe pose")
+#         location = Utils.get_value_of(userdata.goal.parameters, "location")
+#         current_platform_height = rospy.get_param("/"+location)
+#         userdata.move_arm_to = str(str(current_platform_height)+'pose4cm/')
+#         print("from place server ========")
+#         print(userdata.move_arm_to)
+#         rospy.sleep(0.1)
+#         return "succeeded"
+    
 class DefalutSafePose(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=["succeeded", "failed"],
@@ -241,9 +259,21 @@ class DefalutSafePose(smach.State):
         rospy.logwarn("Checking pre-defined safe pose")
         location = Utils.get_value_of(userdata.goal.parameters, "location")
         current_platform_height = rospy.get_param("/"+location)
-        userdata.move_arm_to = str(str(current_platform_height)+'pose4cm/')
-        print("from place server ========")
-        print(userdata.move_arm_to)
+        
+        # Randomly select a pose from pose1 to pose4
+        random_pose_index = random.randint(1, 3)  # Generates a number between 1 and 4
+        selected_pose = f"pose{random_pose_index}"
+        
+        # userdata.move_arm_to = str(str(current_platform_height)+'pose4cm/')
+        # print("from place server ========")
+        
+        # Construct the target pose string
+        userdata.move_arm_to = f"{current_platform_height}cm/{selected_pose}"
+
+        rospy.loginfo(f"Selected pose: {userdata.move_arm_to}")
+        
+        
+        # print(userdata.move_arm_to)
         rospy.sleep(0.1)
         return "succeeded"
 

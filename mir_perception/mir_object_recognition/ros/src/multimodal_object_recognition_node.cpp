@@ -658,8 +658,8 @@ void MultimodalObjectRecognitionROS::recognizeCloudAndImage()
           if (obj_category_ == "cavity")
           {
             // rgb_object_list.objects[i].pose.pose.position.x += 0.02;
-            rgb_object_list.objects[i].pose.pose.position.x += (0.005);
-            rgb_object_list.objects[i].pose.pose.position.y += (-0.006);
+            rgb_object_list.objects[i].pose.pose.position.x += (0.007);  // prev 0.005
+            rgb_object_list.objects[i].pose.pose.position.y += (-0.010);  //prev -0.006
           }
 
           // print the rpy pose

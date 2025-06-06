@@ -30,7 +30,7 @@ class EmptySpaceDetector:
         rospack = rospkg.RosPack()
         package_path = rospack.get_path('mir_empty_space_prediction')
 
-        self.model_path = os.path.join(package_path, "model/Yolov8s_updated.pt") # updating new model
+        self.model_path = os.path.join(package_path, "model/best_empty.pt") # updating new model
 
         # Load ROI parameters of all WS
         roi_params_path = os.path.join(package_path, "config/params.yaml")
@@ -39,10 +39,12 @@ class EmptySpaceDetector:
             all_roi_params = yaml.safe_load(file)
         
         # get worsktation from ros param
-        self.workstation = rospy.get_param("/place_object_server/worskstation", "DEFAULT")
+        self.workstation = rospy.get_param("/place_object_server/worskstation")
+        print(self.workstation)
 
-        if self.workstation not in all_roi_params:
+        if self.workstation in all_roi_params:
             roi=all_roi_params[self.workstation]
+            print(roi)
         else:
             rospy.logwarn(f"Invalid workstation '{self.workstation}', defaulting to WS01")
             roi = all_roi_params["DEFAULT"]

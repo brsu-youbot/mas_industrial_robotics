@@ -251,7 +251,7 @@ def main():
             gbs.send_and_wait_events_combined(
                 event_in_list=[("/mir_perception/gesture_recognition/event_in", "e_start")],
                 event_out_list=[("/mir_perception/gesture_recognition/event_out", "e_done", True)],
-                timeout_duration=40,
+                timeout_duration=100,
             ),
             transitions={
                 "success": "PUBLISH_REFERENCE_FRAME",
@@ -272,7 +272,7 @@ def main():
             gbs.send_and_wait_events_combined(
                 event_in_list=[("/mir_perception/coworker_assembly/event_in", "e_start")],
                 event_out_list=[("/mir_perception/coworker_assembly/event_out", "e_done", True)],
-                timeout_duration=60,
+                timeout_duration=120,
             ),
             transitions={
                 "success": "PICK_ASSEMBLED_OBJECT",

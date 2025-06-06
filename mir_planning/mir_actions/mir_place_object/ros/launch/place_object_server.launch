@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <launch>
 
-    <arg name="max_allowed_tries" default= "3" />
+    <arg name="max_allowed_tries" default= "1" />
     <arg name="is_empty_space_placing" default="True"/> 
     <arg name="worskstation" default="DEFAULT"/>
 <!-- True is empty space , False is place pose selector  NOT WORKING !!!!-->
-    <node pkg="mir_place_object" type="place_object_server_latest.py" name="place_object_server" output="screen">
+    <node pkg="mir_place_object" type="place_object_server_bmt.py" name="place_object_server" output="screen">   
         <rosparam param="max_allowed_tries" subst_value="True"> $(arg max_allowed_tries) </rosparam>
         <param name="is_empty_space_placing" type="bool" value="$(arg is_empty_space_placing)" />
         <param name="worskstation" type="string" value="$(arg worskstation)" />
@@ -16,3 +16,7 @@
     <rosparam command="load" file="$(find mir_place_pose_selector)/ros/config/platform_heights.yaml"/>
 
 </launch>
+
+
+<!-- for all tasks -> place_object_server_latest.py -->
+<!-- for bmt and btt -> place_object_server_bmt.py -->

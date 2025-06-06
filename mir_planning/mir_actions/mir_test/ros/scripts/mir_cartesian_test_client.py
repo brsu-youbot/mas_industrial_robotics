@@ -9,9 +9,9 @@ from diagnostic_msgs.msg import KeyValue
 from mir_planning_msgs.msg import GenericExecuteAction, GenericExecuteGoal
 
 if __name__ == "__main__":
-    rospy.init_node("mir_cartesian_test_client")
+    rospy.init_node("default_place_object_client")
 
-    client = SimpleActionClient("mir_cartesian_test_server", GenericExecuteAction)
+    client = SimpleActionClient("default_place_object_server", GenericExecuteAction)
     client.wait_for_server()
     print("Server found")
 

@@ -42,7 +42,7 @@ class SelectObject(smach.State):
             current_state="SelectObject", text="selecting object"
         )
 
-        obj = Utils.get_value_of(userdata.goal.parameters, "object")
+        obj = Utils.get_value_of(userdata.goal.parameters, "object")    
         self.publisher.publish(String(data=obj))
         rospy.sleep(0.2)  # let the topic to survive for some time
         return "succeeded"
@@ -90,7 +90,7 @@ class SendPoseToDBC(smach.State):
             pose_msg.header.frame_id = "base_link_static"
             pose_msg.header.stamp = rospy.Time.now()
             # amount to move backward after pick object
-            pose_msg.pose.position.x = tf_msg[0][0] - 0.175
+            pose_msg.pose.position.x = tf_msg[0][0] - 0.117
             pose_msg.pose.position.y = tf_msg[0][1]
             pose_msg.pose.position.z = tf_msg[0][2]
             pose_msg.pose.orientation.x = tf_msg[1][0]
@@ -104,7 +104,10 @@ class SendPoseToDBC(smach.State):
             self._obj_pose.pose.position.x += 0.05
             dbc_pose = self.utils.calc_pose_for_dbc(self._obj_pose)
             
-            self._new_obj_pose.pose.position.x -= 0.1
+            self._new_obj_pose.pose.position.x -= 0.09  # prev 0.1
+            self._new_obj_pose.pose.position.y += 0.0
+            
+            self._new_obj_pose.pose.position.y += 0.03
             # modify the orientation of the object pose
             pose_rpy = euler_from_quaternion(
                 [

@@ -1,35 +1,142 @@
 DEFAULT:
-  x_min: 10
-  x_max: 640
-  y_min: 170
-  y_max: 410
-WS01:
-  x_min: 10
-  x_max: 640
-  y_min: 170
-  y_max: 400
-WS02:
-  x_min: 10
-  x_max: 640
-  y_min: 170
-  y_max: 400
-WS03:
-  x_min: 10
-  x_max: 640
-  y_min: 170
-  y_max: 410
-WS04:
-  x_min: 10
-  x_max: 640
-  y_min: 170
-  y_max: 410
-WS05:
-  x_min: 10
-  x_max: 640
-  y_min: 170
-  y_max: 410
-WS06:
-  x_min: 8
-  x_max: 640
+  x_min: 60
+  x_max: 560
   y_min: 160
-  y_max: 380
+  y_max: 380  
+
+
+# Go25 ###############
+
+WS2:
+  x_min: 20
+  x_max: 580
+  y_min: 170
+  y_max: 380  
+
+WS3:
+  x_min: 40
+  x_max: 630
+  y_min: 150
+  y_max: 380  
+
+WS9:
+  x_min: 70
+  x_max: 630
+  y_min: 170
+  y_max: 380 
+
+WS12:
+  x_min: 40
+  x_max: 630
+  y_min: 150
+  y_max: 370  
+  
+
+WS13:
+  x_min: 10
+  x_max: 640
+  y_min: 150
+  y_max: 370 
+
+WS14:
+  x_min: 10
+  x_max: 640
+  y_min: 130
+  y_max: 360 
+
+WS1:
+  x_min: 10
+  x_max: 640
+  y_min: 120
+  y_max: 360 
+
+PETER:
+  x_min: 10
+  x_max: 640
+  y_min: 120
+  y_max: 360
+
+WS5:
+  x_min: 70
+  x_max: 540
+  y_min: 190
+  y_max: 420  
+
+WS6:
+  x_min: 90
+  x_max: 590
+  y_min: 190
+  y_max: 440  
+
+WS7:
+  x_min: 110
+  x_max: 610
+  y_min: 160
+  y_max: 380  
+
+WS8:
+  x_min: 150
+  x_max: 630
+  y_min: 160
+  y_max: 380 
+
+
+WS11:
+  x_min: 10
+  x_max: 640
+  y_min: 230
+  y_max: 410 
+
+
+
+
+################# NEED TO CHECK ########################
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+################################## OLD ##########################################
+# WS01:
+#   x_min: 10
+#   x_max: 640
+#   y_min: 200
+#   y_max: 420
+# WS02:
+#   x_min: 10
+#   x_max: 640
+#   y_min: 170
+#   y_max: 400
+# WS03:
+#   x_min: 10
+#   x_max: 640
+#   y_min: 170
+#   y_max: 410
+# WS04:
+#   x_min: 10
+#   x_max: 640
+#   y_min: 170
+#   y_max: 410
+# WS05:
+#   x_min: 10
+#   x_max: 640
+#   y_min: 170
+#   y_max: 410
+# WS06:
+#   x_min: 8
+#   x_max: 640
+#   y_min: 160
+#   y_max: 380
+
+
+
