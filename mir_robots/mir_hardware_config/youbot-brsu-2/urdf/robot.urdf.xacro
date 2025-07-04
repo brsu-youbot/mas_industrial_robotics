@@ -68,7 +68,8 @@
       <!-- <origin xyz="-0.034 0.008 -0.004" rpy="0.0 1.22 0.0" />   -->
       <!-- <origin xyz="-0.055 0.020 0.016" rpy="0.0 1.22 0.0" />   -->
       <!-- <origin xyz="-0.040 0.020 0.016" rpy="0.0 1.22 0.0" />  --> <!--Pre-GermanOpen25-->
-      <origin xyz="-0.00 0.020 0.016" rpy="0.0 1.22 0.0" /> 
+      <origin xyz="-0.025 0.023 0.025" rpy="0.0 1.22 0.0" />   <!--z=0.016 prev-->
+  
   </xacro:sensor_d435>
 
   <!-- tower middle camera -->
@@ -132,7 +133,7 @@
   <link name="tower_camera_stand_link_horizontal">
     <visual>
       <geometry>
-        <box size="0.030 0.030 0.608"/>
+        <box size="0.030 0.030 0.56"/>  <!--0.608 -->
       </geometry>
       <material name="">
           <color rgba="0.85098 0.85098 0.85098 1"/>

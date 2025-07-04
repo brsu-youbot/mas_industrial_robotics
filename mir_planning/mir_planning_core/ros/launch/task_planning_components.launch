@@ -10,15 +10,17 @@
     <arg name="domain_path" default="$(arg base_path)/domain.pddl" />
 
     <!-- upload domain args - pddl problem that will be loaded as instrinsic knowledge --> 
-    <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/minimum_required_facts.pddl" />
+    <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/minimum_required_facts.pddl" /> -->
     <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/mini_bmt_demo_copy.pddl" /> -->
     <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/go24_finals.pddl" /> -->
     <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/rc24_finals_2.pddl" /> -->
     <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/att1_rc24.pddl" /> -->
     <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/all_ws.pddl" /> -->
+    <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/rcaw25_test.pddl" /> -->
     <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/bmt_13_03.pddl" /> -->
     <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/large_obj_test.pddl" /> -->
     <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/bmt_rc24.pddl" /> -->
+    <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/ppt_pre.pddl" />
     <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/robocup_advanced_tasks.pddl" /> -->
     <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/att1_rc24.pddl" /> -->
     <!-- <arg name="yb_intrinsic_knowledge" default="$(arg base_path)/att2_rc24.pddl" /> -->

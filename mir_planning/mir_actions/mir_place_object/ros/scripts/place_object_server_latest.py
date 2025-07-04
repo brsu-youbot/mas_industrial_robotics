@@ -173,6 +173,8 @@ class TriggerEmptySpaceDetection(smach.State):
         - Returns 'succeeded' if empty space is found.
         - Returns 'failed' if no empty space is detected or timeout occurs.
         """
+        
+        
         self.event_received = None  # Reset event flag
         self.trigger_pub.publish(String("e_empty"))
 
@@ -303,14 +305,14 @@ class DefineShelfPlacePose(smach.State):
         location = Utils.get_value_of(userdata.goal.parameters, "location")
 
         try:
-            if location == "SH1":
+            if location == "SH01":
                 if len(self.pose_list_sh01) > 0:
                     rospy.logwarn("Getting shelf place pose from list")
                     userdata.move_arm_to = self.pose_list_sh01.pop()
                 else:
                     rospy.logfatal("No more shelf place pose in list, so using default pose")
                     userdata.move_arm_to = "shelf_place_final"
-            elif location == "SH2":
+            elif location == "SH02":
                 if len(self.pose_list_sh02) > 0:
                     rospy.logwarn("Getting shelf place pose from list")
                     userdata.move_arm_to = self.pose_list_sh02.pop()
@@ -342,7 +344,7 @@ class CheckIfLocationIsShelf(smach.State):
         print("[Place Object Server] Location received : ", location)
         
 
-        if (location == "SH1") or (location == "SH2"):
+        if (location == "SH01") or (location == "SH02"):
             return "shelf"
         else:       
             return "not_shelf"
@@ -539,6 +541,18 @@ def start_cb(*args, **kwargs):
     userdata.feedback = feedback
 
 
+class SetWorkstationParam(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=["succeeded"], input_keys=["goal"])
+
+    def execute(self, userdata):
+        location = Utils.get_value_of(userdata.goal.parameters, "location")
+        if location:
+            rospy.set_param("/place_object_server/worskstation", location)
+            rospy.loginfo(f"Set param /place_object_server/worskstation = {location}")
+        return "succeeded"
+
+
 
 def main():
     rospy.init_node("place_object_server")
@@ -562,10 +576,16 @@ def main():
     # Initialize feedback and result in userdata
     sm.userdata.feedback = GenericExecuteFeedback()
     sm.userdata.result = GenericExecuteResult()
+    
 
     # ===============================================================================
 
     with sm:
+        smach.StateMachine.add(
+            "SET_WORKSTATION_PARAM",
+            SetWorkstationParam(),
+            transitions={"succeeded": "MOVE_ROBOT_TO_CENTER"},
+        )
         smach.StateMachine.add(
             "MOVE_ROBOT_TO_CENTER",
             gas.move_base(None),
@@ -804,6 +824,7 @@ def main():
                 [
                     ("/waypoint_trajectory_generation/event_in", "e_stop"),
                     ("/wbc/event_in", "e_stop"),
+                    ("/empty_space_detector/event_in", "e_stop"),
                 ]
             ),
             transitions={"success": "CHECK_PICK_POSE_IK"},
@@ -918,7 +939,10 @@ def main():
         smach.StateMachine.add(
             "STOP_PLACE_POSE_SELECTOR",
             gbs.send_event(
-                [("/mcr_perception/place_pose_selector/event_in", "e_stop")]
+                [
+                ("/mcr_perception/place_pose_selector/event_in", "e_stop"),
+                 ("/empty_space_detector/event_in", "e_stop"),
+                 ]
             ),
             # transitions={"success": "OPEN_GRIPPER"},
             transitions={"success": "RELEASE_GRIPPER"},

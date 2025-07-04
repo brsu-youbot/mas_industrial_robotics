@@ -149,34 +149,34 @@ class SendPoseToDBC(smach.State):
 
 # ===============================================================================
 
-class SendPoseToMoveIt(smach.State):
-    def __init__(self, modification_name="intermediate"):
-        smach.State.__init__(self, outcomes=["succeeded"])
-        self._moveit_pose_pub = rospy.Publisher(
-            "/arm_moveit_client/target_pose", PoseStamped, queue_size=10
-        )
-        _obj_pose_sub = rospy.Subscriber(
-            "mcr_perception/object_selector/output/object_pose",
-            PoseStamped,
-            self._obj_pose_cb,
-        )
-        self._obj_pose = None
-        self._modification_name = modification_name
-        self.utils = PickFromShelfUtils()
-        rospy.sleep(0.1)  # time for the publisher to register in ros network
+# class SendPoseToMoveIt(smach.State):
+#     def __init__(self, modification_name="intermediate"):
+#         smach.State.__init__(self, outcomes=["succeeded"])
+#         self._moveit_pose_pub = rospy.Publisher(
+#             "/arm_moveit_client/target_pose", PoseStamped, queue_size=10
+#         )
+#         _obj_pose_sub = rospy.Subscriber(
+#             "mcr_perception/object_selector/output/object_pose",
+#             PoseStamped,
+#             self._obj_pose_cb,
+#         )
+#         self._obj_pose = None
+#         self._modification_name = modification_name
+#         self.utils = PickFromShelfUtils()
+#         rospy.sleep(0.1)  # time for the publisher to register in ros network
 
-    def _obj_pose_cb(self, msg):
-        self._obj_pose = copy.deepcopy(msg)
+#     def _obj_pose_cb(self, msg):
+#         self._obj_pose = copy.deepcopy(msg)
 
-    def execute(self, userdata):
-        modified_obj_pose = self.utils.get_arm_pose(
-            self._obj_pose, self._modification_name
-        )
-        rospy.loginfo("Modified pose")
-        rospy.loginfo(modified_obj_pose)
-        self._moveit_pose_pub.publish(modified_obj_pose)
-        self._obj_pose = None
-        return "succeeded"
+#     def execute(self, userdata):
+#         modified_obj_pose = self.utils.get_arm_pose(
+#             self._obj_pose, self._modification_name
+#         )
+#         rospy.loginfo("Modified pose")
+#         rospy.loginfo(modified_obj_pose)
+#         self._moveit_pose_pub.publish(modified_obj_pose)
+#         self._obj_pose = None
+#         return "succeeded"
 
 # ===============================================================================
 
@@ -292,14 +292,14 @@ def main():
                          "timeout": "MOVE_ROBOT_AND_PICK"},
         )
 
-        smach.StateMachine.add(
-            "MOVE_ARM_TO_PRE_GRASP",
-            gms.move_arm("shelf_pre_grasp_lower"),
-            transitions={
-                "succeeded": "MOVE_ROBOT_AND_PICK",
-                "failed": "MOVE_ARM_TO_PRE_GRASP",
-            },
-        )
+        # smach.StateMachine.add(
+        #     "MOVE_ARM_TO_PRE_GRASP",
+        #     gms.move_arm("shelf_pre_grasp_lower"),
+        #     transitions={
+        #         "succeeded": "MOVE_ROBOT_AND_PICK",
+        #         "failed": "MOVE_ARM_TO_PRE_GRASP",
+        #     },
+        # )
 
         smach.StateMachine.add(
             "MOVE_ROBOT_AND_PICK",

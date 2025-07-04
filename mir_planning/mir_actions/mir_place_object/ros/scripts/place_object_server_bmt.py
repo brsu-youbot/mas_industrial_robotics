@@ -98,88 +98,32 @@ class MoveArmUp(smach.State):
 # by Annudeep
 
 
-
-# ===============================================================================
-
-
-class GetPoseToPlaceOject(smach.State):  # inherit from the State base class
-    def __init__(self, topic_name_pub, topic_name_sub, event_sub, timeout_duration):
-        smach.State.__init__(
-            self,
-            outcomes=["succeeded", "failed"],
-            input_keys=["goal", "feedback"],
-            output_keys=["feedback", "result", "move_arm_to"],
-        )
-
-        self.timeout = rospy.Duration.from_sec(timeout_duration)
-        # create publisher
-        self.platform_name_pub = rospy.Publisher(topic_name_pub, String, queue_size=10)
-        rospy.Subscriber(topic_name_sub, String, self.pose_cb)
-        rospy.Subscriber(event_sub, String, self.event_cb)
-        rospy.sleep(0.1)  # time for publisher to register
-        self.place_pose = None
-        self.status = None
-
-    def pose_cb(self, msg):
-        self.place_pose = msg.data
-
-    def event_cb(self, msg):
-        self.status = msg.data
-
-    def execute(self, userdata):
-        # Add empty result msg (because if none of the state do it, action server gives error)
-        userdata.result = GenericExecuteResult()
-        userdata.feedback = GenericExecuteFeedback(
-            current_state="GetPoseToPlaceOject", text="Getting pose to place obj",
-        )
-
-        location = Utils.get_value_of(userdata.goal.parameters, "location")
-        if location is None:
-            rospy.logwarn('"location" not provided. Using default.')
-            return "failed"
-
-        self.place_pose = None
-        self.status = None
-        self.platform_name_pub.publish(String(data=location))
-
-        # wait for messages to arrive
-        start_time = rospy.Time.now()
-        rate = rospy.Rate(10)  # 10hz
-        while not (rospy.is_shutdown()):
-            if rospy.Time.now() - start_time > self.timeout:
-                break
-            if self.place_pose is not None and self.status is not None:
-                break
-            rate.sleep()
-
-        if (
-            self.place_pose is not None
-            and self.status is not None
-            and self.status == "e_success"
-        ):
-            userdata.move_arm_to = self.place_pose  
-            return "succeeded"
-        else:
-            return "failed"
-
-# ===============================================================================
-
-
 class DefalutSafePose(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=["succeeded", "failed"],
-                                    input_keys=["goal","move_arm_to"],
-                                    output_keys=["move_arm_to"])
+                                    input_keys=["goal","move_arm_to", "pose_queue"],
+                                    output_keys=["move_arm_to", "pose_queue"])
+        
+        self.full_pose_list = ["pose1", "pose2", "pose3"]
 
     def execute(self, userdata):
 
         rospy.logwarn("Checking pre-defined safe pose")
+        
         location = Utils.get_value_of(userdata.goal.parameters, "location")
         current_platform_height = rospy.get_param("/"+location)
         
-        # Randomly select a pose from pose1 to pose4
-        random_pose_index = random.randint(1, 3)  # Generates a number between 1 and 4
-        selected_pose = f"pose{random_pose_index}"
+        # refill pose queue if empty
+        if not userdata.pose_queue:
+            rospy.logwarn("Pose queue is empty, refilling with full pose list")
+            userdata.pose_queue = self.full_pose_list.copy()    
+            
+        # pop a pose from the queue
+        selected_pose = userdata.pose_queue.pop()
+        
+        # # Randomly select a pose from pose1 to pose4
+        # random_pose_index = random.randint(1, 3)  # Generates a number between 1 and 4
+        # selected_pose = f"pose{random_pose_index}"
         
         # userdata.move_arm_to = str(str(current_platform_height)+'pose4cm/')
         # print("from place server ========")
@@ -240,6 +184,8 @@ def main():
     # Initialize feedback and result in userdata
     sm.userdata.feedback = GenericExecuteFeedback()
     sm.userdata.result = GenericExecuteResult()
+    
+    sm.userdata.pose_queue = ["pose1", "pose2", "pose3"]
 
     # ===============================================================================
 
@@ -255,7 +201,8 @@ def main():
                 "MOVE_ARM_TO_PRE_PLACE",
                 gms.move_arm("pre_place", use_moveit=False),
                 transitions={
-                    "succeeded": "START_PLACE_POSE_SELECTOR",
+                    # "succeeded": "START_PLACE_POSE_SELECTOR",
+                    "succeeded": "MOVE_ARM_TO_DEFAULT_PLACE",
                     "failed": "MOVE_ARM_TO_PRE_PLACE",
             },
         )
@@ -264,28 +211,6 @@ def main():
     # ===============================================================================
 
     # below are state for default placing, Anudeep
-
-        smach.StateMachine.add(
-            "START_PLACE_POSE_SELECTOR",
-            gbs.send_event(
-                [("/mcr_perception/place_pose_selector/event_in", "e_start")]
-            ),
-            transitions={"success": "GET_POSE_TO_PLACE_OBJECT"},
-        )
-
-        smach.StateMachine.add(
-            "GET_POSE_TO_PLACE_OBJECT",
-            GetPoseToPlaceOject(
-                "/mcr_perception/place_pose_selector/platform_name",
-                "/mcr_perception/place_pose_selector/place_pose",
-                "/mcr_perception/place_pose_selector/event_out",
-                10.0,
-            ),
-            transitions={
-                "succeeded": "MOVE_ARM_TO_PLACE_OBJECT",
-                "failed": "MOVE_ARM_TO_DEFAULT_PLACE",
-            },
-        )
 
         smach.StateMachine.add(
             "MOVE_ARM_TO_DEFAULT_PLACE",

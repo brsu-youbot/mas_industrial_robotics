@@ -168,6 +168,17 @@ class PregraspPlannerPipeline(object):
             mcr_manipulation_msgs.msg.JointSpaceWayPointsList,
             queue_size=1,
         )
+        
+        ########### by Anudeep  #########################################
+        
+        self.ik_mode_pub = rospy.Publisher(
+            "~ik_mode", std_msgs.msg.String, queue_size=1
+        )
+        
+        rospy.set_param("/pregrasp_planner/ik_mode", "default")
+
+        
+        ##############################################################
 
         # Dynamic reconguration server for PregraspPlannerParams
         dynamic_reconfig_srv = Server(
@@ -329,6 +340,10 @@ class PregraspPlannerPipeline(object):
             self.joint_waypoint_list_pub.publish(joint_waypoints)
 
             rospy.loginfo('[Pregrasp Planning] Found solution using default pick config.')
+            
+            self.ik_mode_pub.publish(std_msgs.msg.String("orien_dependent"))
+            rospy.set_param("/pregrasp_planner/ik_mode", "orien_dependent")
+            
             return True
         else:
             rospy.logerr("[Pregrasp Planning] Could not find IK solution for default pick config.")
@@ -386,6 +401,10 @@ class PregraspPlannerPipeline(object):
             self.joint_waypoint_list_pub.publish(joint_waypoints)
         
         rospy.loginfo('[Pregrasp Planning] Found solution using orientation independent pick config.')
+        
+        self.ik_mode_pub.publish(std_msgs.msg.String("independent"))
+        rospy.set_param("/pregrasp_planner/ik_mode", "independent")
+        
         return True
 
     def running_state(self):

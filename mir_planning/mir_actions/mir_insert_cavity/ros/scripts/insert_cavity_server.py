@@ -81,6 +81,41 @@ class SelectCavity(smach.State):
 
 # ===============================================================================
 
+class CheckIKMode(smach.State):
+    def __init__(self, timeout=3.0):
+        smach.State.__init__(self, outcomes=["use_wiggle", "skip_wiggle", "preempted"])
+        self.timeout = timeout
+
+    def execute(self, userdata):
+        start_time = rospy.Time.now().to_sec()
+        
+        # Wait until the parameter is set or timeout expires
+        ik_mode = None
+        rate = rospy.Rate(10)
+        while ik_mode is None and rospy.Time.now().to_sec() - start_time < self.timeout:
+            if self.preempt_requested():
+                rospy.logwarn("Preempt requested in CheckIKMode.")
+                self.service_preempt()
+                return "preempted"
+
+            # Try to read the parameter, defaulting to None if it doesn't exist
+            if rospy.has_param("/pregrasp_planner/ik_mode"):
+                ik_mode = rospy.get_param("/pregrasp_planner/ik_mode")
+                rospy.loginfo(f"IK mode received (param): {ik_mode}")
+            else:
+                ik_mode = None
+
+            rate.sleep()
+
+        if ik_mode == "orien_dependent":
+            return "use_wiggle"
+        else:
+            rospy.logwarn("Skipping wiggle because IK was independent or default.")
+            return "skip_wiggle"
+
+
+
+# =============================================================================================
 
 class MoveArmUp(smach.State):
     def __init__(self):
@@ -141,7 +176,7 @@ class ppt_wiggle_arm(smach.State):
         self.object_name = None
         self.type_of_adjustment = 'rotational'
 
-        self.linear_wiggle_object_list = ["M20", "M30"]
+        self.linear_wiggle_object_list = ["M20", "M30", "M20-00","M30-00" ]
         self.rotational_wiggle_object_list = ["M20_100", "F20_20_B","F20_20_G", "S40_40_B", "S40_40_G"]
 
 
@@ -230,7 +265,7 @@ class ppt_wiggle_arm(smach.State):
                 self.arm_velocity_pub.publish(message)
                 rospy.sleep(0.1)
                 current_yaw = self.current_joint_positions[-1]
-                rospy.loginfo("Current yaw: %f", current_yaw)
+                # rospy.loginfo("Current yaw: %f", current_yaw)
                 # check for timeout also and break after 5 seconds
                 # limits: 5.58 and 0.16
                 if (current_yaw >= 5.4) or (current_yaw <= 0.28):
@@ -459,57 +494,6 @@ class ppt_wiggle_arm(smach.State):
 
         return "succeeded"
 
-# =============================ROBOCUP24================================================
-class ArmSafe(smach.State):
-
-    def __init__(self):
-        smach.State.__init__(
-            self,
-            outcomes=["success", "failed"],
-        )
-        self.joint_states_sub = rospy.Subscriber("/joint_states", JointState, self.joint_states_cb)
-        self.pub_arm_position = rospy.Publisher("/arm_1/arm_controller/position_command", JointPositions, queue_size=1)
-        self.current_joint_positions = None
-        self.is_arm_moving = False
-        self.zero_vel_counter = 0
-        self.joint_1_position = 1.8787 #1.8787
-
-    def joint_states_cb(self, msg):
-        if "arm_joint_1" in msg.name: # get the joint values of the arm only
-            self.current_joint_positions = msg.position
-
-        self.joint_state = msg
-        # monitor the velocities
-        self.joint_velocities = msg.velocity
-        # if all velocities are 0.0, the arm is not moving
-        if "arm_joint_1" in msg.name and all([v == 0.0 for v in self.joint_velocities]):
-            self.zero_vel_counter += 1
-
-    def execute(self, userdata):
-        self.current_joint_positions = None
-        while not rospy.is_shutdown():
-            rospy.sleep(0.1)
-            if self.current_joint_positions is not None:
-                break
-        joint_values = self.current_joint_positions[:]
-        joint_values = list(joint_values)
-        joint_values[0] -= 0.15 # self.joint_0_position
-        
-        names = self.joint_state.name
-
-        joint_positions = JointPositions()
-        joint_positions.positions = [
-            JointValue(
-                rospy.Time.now(),
-                joint_name,
-                "rad",
-                joint_value
-            )
-            for joint_name, joint_value in zip(names, joint_values)
-        ]
-        self.pub_arm_position.publish(joint_positions)
-        rospy.sleep(1)
-        return "success"
 
 
 # ===============================================================================
@@ -642,17 +626,9 @@ def main():
             },
         )
 
-        # #safety
-        # smach.StateMachine.add(
-        #     "ARM_SAFE",
-        #     ArmSafe(),
-        #     transitions={
-        #         "success":"SET_DBC_PARAMS", 
-        #         "failed":"OVERALL_FAILED",
-        #     },
-        # )
 
-        
+
+
 
         smach.StateMachine.add(
             "SET_DBC_PARAMS",
@@ -664,15 +640,7 @@ def main():
             },
         )
 
-        #safety
-        # smach.StateMachine.add(
-        #     "ARM_SAFE",
-        #     ArmSafe(),
-        #     transitions={
-        #         "success":"MOVE_ROBOT_AND_TRY_INSERTING", 
-        #         "failed":"OVERALL_FAILED",
-        #     },
-        # )
+
 
         smach.StateMachine.add(
             "MOVE_ROBOT_AND_TRY_INSERTING",
@@ -682,12 +650,12 @@ def main():
                 timeout_duration=50,
             ),
             transitions={
-                "success": "OPEN_GRIPPER",
+                "success": "CHECK_IK_MODE",
                 "timeout": "STOP_MOVE_ROBOT_TO_OBJECT_WITH_FAILURE",
                 "failure": "STOP_MOVE_ROBOT_TO_OBJECT_WITH_FAILURE",
             },
         )
-
+        
         smach.StateMachine.add(
             "STOP_MOVE_ROBOT_TO_OBJECT_WITH_FAILURE",
             gbs.send_event(
@@ -698,18 +666,28 @@ def main():
             ),
             transitions={"success": "OVERALL_FAILED"},
         )
-
-        # open gripper
+        
+        
         smach.StateMachine.add(
-            "OPEN_GRIPPER",
-            # gms.control_gripper(0.2),
+            "CHECK_IK_MODE",
+            CheckIKMode(),
+            transitions={
+                "use_wiggle": "OPEN_GRIPPER_AND_WIGGLE",
+                "skip_wiggle": "OPEN_GRIPPER_AND_NO_WIGGLE",
+                "preempted": "OPEN_GRIPPER_AND_NO_WIGGLE",
+            },
+        )
+        
+        # open gripper, move_arm_up, wiggle and pre_place
+        smach.StateMachine.add(
+            "OPEN_GRIPPER_AND_WIGGLE",
             gms.control_gripper('open'),
             transitions={
                 "succeeded": "MOVE_ARM_UP",
                 "timeout": "MOVE_ARM_UP",
             },
         )
-
+        
         smach.StateMachine.add(
             "MOVE_ARM_UP",
             MoveArmUp(),
@@ -719,7 +697,7 @@ def main():
                 
             },
         )
-
+    
         # wiggling the arm for precision placement
         smach.StateMachine.add(
             "WIGGLE_ARM",
@@ -729,6 +707,26 @@ def main():
                 "failed": "MOVE_ARM_TO_HOLD",
             },
         )
+        
+        # open gripper, move_arm_up, no wiggle and pre_place
+        smach.StateMachine.add(
+            "OPEN_GRIPPER_AND_NO_WIGGLE",
+            gms.control_gripper('open'),
+            transitions={
+                "succeeded": "MOVE_ARM_UP_NO_WIGGLE",
+                "timeout": "MOVE_ARM_UP_NO_WIGGLE",
+            },
+        )
+             
+        smach.StateMachine.add(
+            "MOVE_ARM_UP_NO_WIGGLE",
+            MoveArmUp(),
+            transitions={
+                "succeeded": "MOVE_ARM_TO_HOLD",
+                "failed" : "MOVE_ARM_UP_NO_WIGGLE",
+                
+            },
+        )  
 
         # move arm to HOLD position
         smach.StateMachine.add(

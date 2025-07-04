@@ -29,10 +29,10 @@ dbc_pick_object:
         threshold_angular_z: 15.0
         wait_for_transform: 0.1
         p_gain_x: 2.0
-        p_gain_y: 4.0
+        p_gain_y: 3.0
         p_gain_yaw: 4.0
         max_velocity_x: 0.05
-        max_velocity_y: 0.1
+        max_velocity_y: 0.075
         max_velocity_z: 0.0
         max_velocity_roll: 0.0
         max_velocity_pitch: 0.0
@@ -40,8 +40,8 @@ dbc_pick_object:
         use_collision_avoidance: True
         front_laser_threshold: 0.0525
         right_laser_threshold: 0.1
-        rear_laser_threshold: 0.1
-        left_laser_threshold: 0.04
+        rear_laser_threshold: 0.15
+        left_laser_threshold: 0.15
         loop_rate: 25.0
 pregrasp_planner_single_shot:
     /pregrasp_planner_node:
