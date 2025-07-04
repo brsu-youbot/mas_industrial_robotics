@@ -34,6 +34,7 @@ class GestureRecognition():
         rospy.Subscriber("/mir_perception/gesture_recognition/event_in", String, self.event_in_cb)
         self.event_out = rospy.Publisher("/mir_perception/gesture_recognition/event_out", String, queue_size=1)
 
+        # mediapipe model config
         base_options = python.BaseOptions(model_asset_path='../model/gesture_recognizer.task')
         options = vision.GestureRecognizerOptions(base_options=base_options)
         self.recognizer = vision.GestureRecognizer.create_from_options(options)
@@ -96,9 +97,9 @@ class GestureRecognition():
                     self.frame_counter += 1
                 
                     if self.frame_counter >= 5:
-                        self.gesture_sent = True
                         msg_str = f'e_done'
                         self.event_out.publish(String(data=msg_str))
+                        self.gesture_sent = True
                         # print("gesture e_done sent")
                 else:
                     self.frame_counter = 0
