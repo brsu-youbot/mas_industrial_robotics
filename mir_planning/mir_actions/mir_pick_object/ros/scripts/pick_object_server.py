@@ -318,14 +318,12 @@ def main():
     )
 
     # read large object list
-    sm.userdata.large_objects = rospy.get_param("~large_objects", ["S40_40_B", "S40_40_G", "M30", "BEARING_BOX", "MOTOR"])
+    sm.userdata.large_objects = rospy.get_param("~large_objects", ["ALLEN_KEY", "SCREWDRIVER", "WRENCH", "DRILL"])
     sm.userdata.drag_pick_objects = rospy.get_param("~drag_pick_objects", ["ALLEN_KEY","WRENCH"])
-    sm.userdata.reperceive = rospy.get_param("~reperceive", True)    
-    
+    sm.userdata.reperceive = rospy.get_param("~reperceive", True) 
     # workstations with virtual walls
     # sm.userdata.ws_virtual = ["WS05", "WS06"]
     sm.userdata.ws_virtual = rospy.get_param("~ws_virtual", ["WS05", "WS06"])
-
 
     with sm:
         smach.StateMachine.add(
@@ -726,8 +724,26 @@ def main():
             "MOVE_ARM_TO_PRE_PLACE",
             gms.move_arm("pre_place", use_moveit=True),
             transitions={
+                "succeeded": "CHECK_IF_OBJECT_LARGE_FOR_STAGING",
+                "failed": "CHECK_IF_OBJECT_LARGE_FOR_STAGING",
+            },
+        )
+
+        smach.StateMachine.add(
+            "CHECK_IF_OBJECT_LARGE_FOR_STAGING",
+            IsObjectLarge(),
+            transitions={
+                "large": "MOVE_ARM_TO_PRE_PLACE_INTER",
+                "small": "OVERALL_SUCCESS",
+            },
+        )
+
+        smach.StateMachine.add(
+            "MOVE_ARM_TO_PRE_PLACE_INTER",
+            gms.move_arm("platform_stage_inter", use_moveit=True),
+            transitions={
                 "succeeded": "OVERALL_SUCCESS",
-                "failed": "MOVE_ARM_TO_PRE_PLACE",
+                "failed": "MOVE_ARM_TO_PRE_PLACE_INTER",
             },
         )
         
@@ -775,12 +791,9 @@ def main():
         #     ResetClampedPose(),
         #     transitions={"succeeded": "OVERALL_SUCCESS"}
         # )
-            
-        
 
     sm.register_transition_cb(transition_cb)
     sm.register_start_cb(start_cb)
-
 
     # smach viewer
     if rospy.get_param("~viewer_enabled", True):
