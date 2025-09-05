@@ -36,20 +36,31 @@ class SetupMoveArm(smach.State):
         
         # get selected objet from ros parameter
         selected_object = rospy.get_param("/wbc_pick_object_server/selected_object", None)
+        large_objects = rospy.get_param("/wbc_pick_object_server/large_objects",None)
+        
+        print("Large objects: ", large_objects)
+        print(type(large_objects))
         
         if platform is None:
             rospy.logwarn('Missing parameter "platform". Using default.')
             platform = "PLATFORM_LEFT"
         platform = platform.lower()
+        
+        
 
         if self.arm_target == "pre":
-            platform += "_pre"
+            if selected_object in large_objects:
+                platform += "_rot"
+            else:
+                platform += "_pre"
+    
         elif self.arm_target == "final":
-            if selected_object == "SCREWDRIVER" or selected_object == "SCREWDRIVER-00":
+            if selected_object in large_objects:
                 platform += "_screw"
             else:
                 platform = platform
         
+        print("Platform to move arm to: ", platform)
 
         userdata.move_arm_to = platform
 
@@ -149,6 +160,23 @@ class PublishClampedPose(smach.State):
         rospy.sleep(0.5)  # Allow some time for the message to be sent
         return 'succeeded'
 
+
+# reset /wbc_pick_object_server/selected_object rosparam to Default
+class ResetRosparam(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        self.initial_object = "M20"
+        
+    def execute(self, userdata):
+        try:
+            rospy.set_param("/wbc_pick_object_server/selected_object", self.initial_object)
+            rospy.loginfo("Reset selected object parameter to initial value: %s", self.initial_object)
+            return 'succeeded'
+        except Exception as e:
+            rospy.logerr("Failed to reset selected object parameter: %s", str(e))
+            return 'failed'
+    
+
 # ===============================================================================
 # State to reset clamped pose parameter
 # ===============================================================================
@@ -204,14 +232,14 @@ def main():
 
     with sm:
         # add states to the container
-        smach.StateMachine.add(
-            "MOVE_ARM_TO_STAGE_INTERMEDIATE",
-            gms.move_arm("pre_place", use_moveit=False),
-            transitions={
-                "succeeded": "SETUP_MOVE_ARM_PRE_STAGE",
-                "failed": "MOVE_ARM_TO_STAGE_INTERMEDIATE",
-            },
-        )
+        # smach.StateMachine.add(
+        #     "MOVE_ARM_TO_STAGE_INTERMEDIATE",
+        #     gms.move_arm("pre_place", use_moveit=False),
+        #     transitions={
+        #         "succeeded": "SETUP_MOVE_ARM_PRE_STAGE",
+        #         "failed": "MOVE_ARM_TO_STAGE_INTERMEDIATE",
+        #     },
+        # )
 
         smach.StateMachine.add(
             "SETUP_MOVE_ARM_PRE_STAGE",
@@ -244,10 +272,21 @@ def main():
             "MOVE_ARM_STAGE",
             gms.move_arm(use_moveit=False),
             transitions={
-                "succeeded": "OPEN_GRIPPER",
+                "succeeded": "RESET_ROS_PARAM",
                 "failed": "MOVE_ARM_STAGE"
             },
         )
+
+    
+        # Reset the rosparam to default
+        smach.StateMachine.add(
+            "RESET_ROS_PARAM",
+            ResetRosparam(),
+            transitions={"succeeded": "OPEN_GRIPPER",
+                         "failed": "OPEN_GRIPPER"},
+        )
+        
+        ######################################
 
         smach.StateMachine.add(
             "OPEN_GRIPPER",
@@ -255,6 +294,7 @@ def main():
             transitions={"succeeded": "SETUP_MOVE_ARM_RETRACT",
                          "timeout": "SETUP_MOVE_ARM_RETRACT"},
         )
+        
 
         smach.StateMachine.add(
             "SETUP_MOVE_ARM_RETRACT",
