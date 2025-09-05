@@ -104,7 +104,7 @@ class DefalutSafePose(smach.State):
                                     input_keys=["goal","move_arm_to", "pose_queue"],
                                     output_keys=["move_arm_to", "pose_queue"])
         
-        self.full_pose_list = ["pose1", "pose2", "pose3"]
+        self.full_pose_list = ["pose1", "pose2", "pose3", "pose4"]
 
     def execute(self, userdata):
 
@@ -121,7 +121,7 @@ class DefalutSafePose(smach.State):
         # pop a pose from the queue
         selected_pose = userdata.pose_queue.pop()
         
-        # # Randomly select a pose from pose1 to pose4
+        # # Randomly select a pose from bmt_pose1 to pose4
         # random_pose_index = random.randint(1, 3)  # Generates a number between 1 and 4
         # selected_pose = f"pose{random_pose_index}"
         
@@ -185,7 +185,7 @@ def main():
     sm.userdata.feedback = GenericExecuteFeedback()
     sm.userdata.result = GenericExecuteResult()
     
-    sm.userdata.pose_queue = ["pose1", "pose2", "pose3"]
+    sm.userdata.pose_queue = ["pose1", "pose2", "pose3", "pose4"]
 
     # ===============================================================================
 

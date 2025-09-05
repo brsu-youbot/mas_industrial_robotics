@@ -178,7 +178,7 @@ class TriggerEmptySpaceDetection(smach.State):
         self.event_received = None  # Reset event flag
         self.trigger_pub.publish(String("e_empty"))
 
-        timeout = rospy.Duration(5.0)  # Change this value as needed
+        timeout = rospy.Duration(3.0)  # Change this value as needed
         start_time = rospy.Time.now()
 
         while self.event_received is None and (rospy.Time.now() - start_time) < timeout:
@@ -203,7 +203,7 @@ class TriggerPointCloudProcessing(smach.State):
     def execute(self, userdata):
         self.event_received = False
         self.trigger_pub.publish(String("e_cloud"))
-        timeout = rospy.Duration(5.0)
+        timeout = rospy.Duration(6.0)
         start_time = rospy.Time.now()
         while not self.event_received and (rospy.Time.now() - start_time) < timeout:
             rospy.sleep(0.1)
@@ -297,7 +297,7 @@ class DefineShelfPlacePose(smach.State):
                              outcomes=['succeeded', 'failed'],
                              input_keys=["goal"],
                              output_keys=['move_arm_to'])
-        self.pose_list_sh01 = ["shelf_place_1", "shelf_place_2"]
+        self.pose_list_sh01 = ["shelf_place_sh1_1", "shelf_place_sh1_2"]
         self.pose_list_sh02 = ["shelf_place_sh2_1", "shelf_place_sh2_2"]
         # self.pose_list_sh02 = ["shelf_place_3", "shelf_place_4"]
 
@@ -448,7 +448,7 @@ class DefalutSafePose(smach.State):
         current_platform_height = rospy.get_param("/"+location)
         
         # Randomly select a pose from pose1 to pose4
-        random_pose_index = random.randint(1, 3)  # Generates a number between 1 and 4
+        random_pose_index = random.randint(1, 4)  # Generates a number between 1 and 4
         selected_pose = f"pose{random_pose_index}"
         
         # userdata.move_arm_to = str(str(current_platform_height)+'pose4cm/')
@@ -547,6 +547,10 @@ class SetWorkstationParam(smach.State):
 
     def execute(self, userdata):
         location = Utils.get_value_of(userdata.goal.parameters, "location")
+        
+        # ensure it was uppercase
+        location = location.upper()
+        
         if location:
             rospy.set_param("/place_object_server/worskstation", location)
             rospy.loginfo(f"Set param /place_object_server/worskstation = {location}")
