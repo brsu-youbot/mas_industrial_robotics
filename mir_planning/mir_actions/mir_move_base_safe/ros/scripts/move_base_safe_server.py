@@ -275,7 +275,7 @@ def main():
 
         smach.StateMachine.add(
             "SET_DIRECT_BASE_CONTROLLER_PARAMETERS",
-            gbs.set_named_config("dbc_move_base"),
+            gbs.set_named_config("dbc_move_base"),  # dbc_move_base_test try
             transitions={
                 "success": "START_MOVE_BASE",
                 "timeout": "OVERALL_FAILED",
