@@ -63,13 +63,8 @@
   <!-- tower front camera -->
   <xacro:sensor_d435 name="tower_cam3d_front_camera" parent="tower_camera_front_bolt_link" use_nominal_extrinsics="true">
      <!-- camera calibration -->
-      <!-- <origin xyz="0.035 0.020 0.0" rpy="0.0 1.22 0.0" /> -->
-      <!-- <origin xyz="-0.026 0.005 0.0" rpy="0.0 1.22 0.0" />   -->
-      <!-- <origin xyz="-0.034 0.008 -0.004" rpy="0.0 1.22 0.0" />   -->
-      <!-- <origin xyz="-0.055 0.020 0.016" rpy="0.0 1.22 0.0" />   -->
       <!-- <origin xyz="-0.040 0.020 0.016" rpy="0.0 1.22 0.0" />  --> <!--Pre-GermanOpen25-->
-      <origin xyz="-0.025 0.023 0.025" rpy="0.0 1.22 0.0" />   <!--z=0.016 prev-->
-  
+      <origin xyz="-0.033 0.023 0.030" rpy="0.0 1.22 0.0" />
   </xacro:sensor_d435>
 
   <!-- tower middle camera -->
