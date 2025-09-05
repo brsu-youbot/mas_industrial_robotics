@@ -3,6 +3,7 @@
 
     <!-- For EEF rotation while staging-->
     <arg name="large_objects" default="['SCREWDRIVER', 'SCREWDRIVER-00', 'WRENCH', 'WRENCH-00', 'DRILL', 'DRILL-00']" />
+    <!-- Change this virtual wall workstations as per arena -->
     <arg name="ws_virtual" default="['WS17', 'WS16']" />
     <!-- Add virtual wall threshold parameter -->
     <arg name="virtual_wall_threshold" default="0.18" />
