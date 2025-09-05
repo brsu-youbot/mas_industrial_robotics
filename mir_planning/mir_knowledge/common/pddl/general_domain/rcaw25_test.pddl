@@ -32,7 +32,7 @@
         (on S40_40_G-00 TT01)
 
         (on MOTOR2-00 WS01)
-        (on ALLENKEY-00 WS03)
+        (on ALLENKEY-00 SH01)
 
         (on CONTAINER_BOX_RED-00 WS05) 
         (on CONTAINER_BOX_BLUE-00 WS03) 
@@ -45,20 +45,17 @@
         (on PP01_CAVITY-00 PP01) 
         (is_large ALLENKEY-00) 
         (is_large DRILL-00)
-        (insertable F20_20_G-00)
         (insertable ALLENKEY-00)
         (insertable SCREWDRIVER-00)
         (insertable WRENCH-00)
         (insertable M20-00)
         (insertable S40_40_G-00)
-        (insertable M20_100-00)
         (is_big_enough PLATFORM_RIGHT) 
     ) 
 
     (:goal 
         (and 
             (in ALLENKEY-00 CONTAINER_BOX_BLUE-00) 
-            (in M20_100-00 CONTAINER_BOX_BLUE-00) 
             (in SCREWDRIVER-00 CONTAINER_BOX_RED-00) 
             (in WRENCH-00 CONTAINER_BOX_RED-00) 
 
@@ -67,6 +64,8 @@
 
             (on BEARING2-00 WS03) 
             (in S40_40_G-00 PP01_CAVITY-00) 
+
+            (on M20_100-00 SH01)
 
             (on HOUSING-00 WS01)
             (in M20-00 PP01_CAVITY-00) 
