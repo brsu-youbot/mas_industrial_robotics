@@ -54,7 +54,6 @@ class SelectCavity(smach.State):
                     return matchings[key][vertical]
         return None
 
-
     def execute(self, userdata):
         # Add empty result msg (because if none of the state do it, action server gives error)
         userdata.result = GenericExecuteResult()
@@ -112,8 +111,6 @@ class CheckIKMode(smach.State):
         else:
             rospy.logwarn("Skipping wiggle because IK was independent or default.")
             return "skip_wiggle"
-
-
 
 # =============================================================================================
 
@@ -281,7 +278,7 @@ class ppt_wiggle_arm(smach.State):
                     self.stop_arm()
                     return False 
 
-    def linear_wiggle_cartesian_mode(self, movement_type, travel_direction, message, travel_distance= 0.1, travel_velocity=0.03, timeout=5.0):
+    def linear_wiggle_cartesian_mode(self, movement_type, travel_direction, message, travel_distance= 0.08, travel_velocity=0.02, timeout=5.0):
         """
         Because of joint limit linear velocity movement is not possible do properlly
         
@@ -354,7 +351,6 @@ class ppt_wiggle_arm(smach.State):
         else:
             rospy.logerr("[cavity server] Invalid travel direction")
             return "failed"
-
 
         try:
             self.arm_command.set_joint_value_target(self.joint_values_static)
@@ -494,8 +490,6 @@ class ppt_wiggle_arm(smach.State):
 
         return "succeeded"
 
-
-
 # ===============================================================================
 
 class Unstage_to_place(smach.State):
@@ -551,7 +545,6 @@ def start_cb(*args, **kwargs):
     feedback.current_state = sm_state
     userdata.feedback = feedback
 # ===============================================================================
-
 
 def main():
     rospy.init_node("insert_cavity_server")
@@ -626,21 +619,16 @@ def main():
             },
         )
 
-
-
-
-
+        # set dbc params
         smach.StateMachine.add(
             "SET_DBC_PARAMS",
-            gbs.set_named_config("dbc_pick_object"),
+            gbs.set_named_config("dbc_ppt_pick_object"), #prev-dbc_pick_object
             transitions={
                 "success": "MOVE_ROBOT_AND_TRY_INSERTING",
                 "timeout": "OVERALL_FAILED",
                 "failure": "OVERALL_FAILED",
             },
         )
-
-
 
         smach.StateMachine.add(
             "MOVE_ROBOT_AND_TRY_INSERTING",
@@ -666,7 +654,6 @@ def main():
             ),
             transitions={"success": "OVERALL_FAILED"},
         )
-        
         
         smach.StateMachine.add(
             "CHECK_IK_MODE",
@@ -767,13 +754,5 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
 
 
