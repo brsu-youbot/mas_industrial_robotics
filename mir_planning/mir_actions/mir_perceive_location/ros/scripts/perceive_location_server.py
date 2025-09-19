@@ -211,8 +211,6 @@ class SetPerceptionParams(smach.State):
 
     def execute(self, userdata):
         obj_category = Utils.get_value_of(userdata.goal.parameters, "obj_category")
-<<<<<<< HEAD
-
         rospy.loginfo("=============[PERCEIVE_LOCATION] obj_category: %s", obj_category)
 
         if obj_category:
@@ -221,14 +219,6 @@ class SetPerceptionParams(smach.State):
             return "success"
         else:
             rospy.loginfo("=============[PERCEIVE_LOCATION] [ELSEEEE] obj_category: %s", obj_category)
-=======
-        rospy.loginfo("[perceive] obj_category: %s", obj_category)
-
-        if obj_category:
-            self.set_named_config.execute(userdata, obj_category)
-            return "success"
-        else:
->>>>>>> 9940dbc0ed08e70256fb6ce7fab6e098507869c2
             self.set_named_config.execute(userdata)
             return "success"
 
