@@ -79,7 +79,6 @@ class GestureRecognition():
         # """
         self.event = msg.data
         if self.event.startswith("e_start") and not self.gesture_sent:
-        # if not self.gesture_sent:
             # Subscribe to image topic
             self.sub_img = rospy.Subscriber("/tower_cam3d_front/color/image_raw", Image, self.callback)
 

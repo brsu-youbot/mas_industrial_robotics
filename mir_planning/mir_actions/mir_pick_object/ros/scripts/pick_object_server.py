@@ -337,14 +337,11 @@ def main():
             },
         )
         
-        #######################################
-        # by Anudeep
         smach.StateMachine.add(
             "SET_WBC_THRESHOLD_PARAM",
             SetWBCThresholdParam(),
             transitions={"succeeded": "SELECT_OBJECT"},
         )
-        ###################################
 
         smach.StateMachine.add(
             "SELECT_OBJECT",
@@ -553,8 +550,6 @@ def main():
                          "timeout": "TRY_PICKING"},
         )
 
-
-
         # move only arm for wbc
         smach.StateMachine.add(
             "TRY_PICKING",
@@ -594,7 +589,6 @@ def main():
                          "timeout": "MOVE_ROBOT_AND_PICK"},
         )
 
-
         # whole body control command. It moves direct base controller and
         # calls pre-grasp planner, and (optionally) moves arm to object pose
         smach.StateMachine.add(
@@ -621,7 +615,6 @@ def main():
             ),
             transitions={"success": "OVERALL_FAILED"},
         )
-
         
         #==========================================================
         

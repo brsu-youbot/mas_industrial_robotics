@@ -523,9 +523,6 @@ class Unstage_to_place(smach.State):
         self.unstage_client.send_goal(goal)
         self.unstage_client.wait_for_result(rospy.Duration.from_sec(25.0))
 
-        # rospy.sleep(0.05)
-        # rospy.loginfo("Waiting after Unstaging")
-
         return "success"
 
 # ===============================================================================

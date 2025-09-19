@@ -74,9 +74,6 @@ PointCloud object::estimatePose(const PointCloud::Ptr &xyz_input_cloud, geometry
     double limit_max = max_pt.z + passthrough_lim_max_offset;
     if (obj_category == "cavity")
     {
-      // print
-      // std::cout << "[CAVITYYYYYYYYYYYY] min_pt.z: " << min_pt.z << std::endl;
-      // std::cout << "[CAVITYYYYYYYYYYYY] max_pt.z: " << max_pt.z << std::endl;
       limit_max = max_pt.z - 0.015; // TODO: make 0.01 as a dynamic configurable parameter
       if (object.name == "M20_H")
       {

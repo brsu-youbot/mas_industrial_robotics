@@ -105,7 +105,7 @@ MultimodalObjectRecognitionROS::MultimodalObjectRecognitionROS(ros::NodeHandle n
   ROS_WARN_STREAM("[multimodal_object_recognition] target frame: " <<target_frame_id_);
   nh_.param<std::string>("pointcloud_source_frame_id", pointcloud_source_frame_id_, "fixed_camera_link");
 
-  nh_.param<std::string>("logdir", logdir_, "/home/robocup/perception_debug_data/");
+  nh_.param<std::string>("logdir", logdir_, "/tmp");
   nh_.param<std::string>("object_info", object_info_path_, "None");
   loadObjectInfo(object_info_path_);
 
@@ -226,62 +226,10 @@ void MultimodalObjectRecognitionROS::segmentPointCloud(mas_perception_msgs::Obje
   PointCloud::Ptr cloud_debug(new PointCloud);
   cloud_debug = scene_segmentation_ros_->getCloudDebug();
 
-    // // ToDo: Chaitanya, move this out of debug and apply filter 
-  pcl::PointXYZRGB min_pt;
-  pcl::PointXYZRGB max_pt;
-  pcl::getMinMax3D(*cloud_debug, min_pt, max_pt);
-  std::cout<<"min x: "<<min_pt.x<<" miny: "<<min_pt.y<<" min z: "<<min_pt.z<<std::endl;
-  std::cout<<"max x: "<<max_pt.x<<" maxy: "<<max_pt.y<<" max z: "<<max_pt.z<<std::endl;
-
-  geometry_msgs::PointStamped tr_plane_point;
-  tr_plane_point.header.frame_id = target_frame_id_;
-  tr_plane_point.header.stamp = ros::Time::now();
-  tr_plane_point.point.x = max_pt.x;
-  tr_plane_point.point.y = max_pt.y;
-  tr_plane_point.point.z = min_pt.z;
-  pub_tr_plane_point_.publish(tr_plane_point);
-
-  geometry_msgs::PointStamped tl_plane_point;
-  tl_plane_point.header.frame_id = target_frame_id_;
-  tl_plane_point.header.stamp = ros::Time::now();
-  tl_plane_point.point.x = min_pt.x;
-  tl_plane_point.point.y = max_pt.y;
-  tl_plane_point.point.z = min_pt.z;
-  pub_tl_plane_point_.publish(tl_plane_point);
-
-  geometry_msgs::PointStamped br_plane_point;
-  br_plane_point.header.frame_id = target_frame_id_;
-  br_plane_point.header.stamp = ros::Time::now();
-  br_plane_point.point.x = max_pt.x;
-  br_plane_point.point.y = min_pt.y;
-  br_plane_point.point.z = min_pt.z;
-  pub_br_plane_point_.publish(br_plane_point);
-
-  geometry_msgs::PointStamped bl_plane_point;
-  bl_plane_point.header.frame_id = target_frame_id_;
-  bl_plane_point.header.stamp = ros::Time::now();
-  bl_plane_point.point.x = min_pt.x;
-  bl_plane_point.point.y = min_pt.y;
-  bl_plane_point.point.z = min_pt.z;
-  pub_bl_plane_point_.publish(bl_plane_point);
-  
-  // corners.push_back(pcl::PointXYZ(minPt.x, minPt.y, minPt.z)); // Bottom-left
-  // corners.push_back(pcl::PointXYZ(minPt.x, maxPt.y, minPt.z)); // Top-left
-  // corners.push_back(pcl::PointXYZ(maxPt.x, minPt.y, minPt.z)); // Bottom-right
-  // corners.push_back(pcl::PointXYZ(maxPt.x, maxPt.y, minPt.z)); // Top-right
-
   if (debug_mode_)
   {
     PointCloud::Ptr cloud_debug(new PointCloud);
     cloud_debug = scene_segmentation_ros_->getCloudDebug();
-
-    // // ToDo: Chaitanya, move this out of debug and apply filter 
-    // pcl::PointXYZRGB min_pt;
-    // pcl::PointXYZRGB max_pt;
-    // pcl::getMinMax3D(*cloud_debug, min_pt, max_pt);
-    // std::cout<<"min x: "<<min_pt.x<<" miny: "<<min_pt.y<<" min z: "<<min_pt.z<<std::endl;
-    // std::cout<<"max x: "<<max_pt.x<<" maxy: "<<max_pt.y<<" max z: "<<max_pt.z<<std::endl;
-
     sensor_msgs::PointCloud2 ros_pc2;
     pcl::toROSMsg(*cloud_debug, ros_pc2);
     ros_pc2.header.frame_id = target_frame_id_;
@@ -494,7 +442,6 @@ void MultimodalObjectRecognitionROS::recognizeCloudAndImage()
       {
         // get the segment mask
         sensor_msgs::Image mask_img = object.mask;
-
         cv_bridge::CvImagePtr cv_mask_img;
         try {
           cv_mask_img = cv_bridge::toCvCopy(mask_img, sensor_msgs::image_encodings::MONO8);
@@ -561,6 +508,7 @@ void MultimodalObjectRecognitionROS::recognizeCloudAndImage()
       // check if object name has container
       bool is_container = false;
       ROS_WARN("Object name: %s", object.name.c_str());
+
       if (object.name == "CONTAINER_BOX_BLUE" || object.name == "CONTAINER_BOX_RED")
       {
         ROS_INFO("Found container object %s", object.name.c_str());
@@ -929,6 +877,7 @@ void MultimodalObjectRecognitionROS::adjustObjectPose(mas_perception_msgs::Objec
     double change_in_pitch = 0.0;
     if (round_objects_.count(object_list.objects[i].name))
     {
+      ROS_INFO_STREAM("Setting yaw to zero for " << object_list.objects[i].name);
       yaw = 0.0;
     }
     if (object_list.objects[i].name == "M30_H" 
@@ -965,72 +914,71 @@ void MultimodalObjectRecognitionROS::adjustObjectPose(mas_perception_msgs::Objec
     // }
     // else
     // {
-      // Make pose flat
-      tf::Quaternion q2 = tf::createQuaternionFromRPY(0.0, change_in_pitch , yaw);
-      object_list.objects[i].pose.pose.orientation.x = q2.x();
-      object_list.objects[i].pose.pose.orientation.y = q2.y();
-      object_list.objects[i].pose.pose.orientation.z = q2.z();
-      object_list.objects[i].pose.pose.orientation.w = q2.w(); 
 
-      double detected_object_height = object_list.objects[i].pose.pose.position.z;
-      ROS_WARN_STREAM("Object:" << object_list.objects[i].name << "  Object height: " << detected_object_height << "  Workspace height: " << scene_segmentation_ros_->getWorkspaceHeight());
-      if (obj_category_ == "cavity")
-      {
-           ROS_WARN_STREAM("PP01 workstation; not updating height");
-      }
-      else if (object_list.objects[i].name == "CONTAINER_BOX_RED" ||
-               object_list.objects[i].name == "CONTAINER_BOX_BLUE")
-      {
-           ROS_WARN_STREAM("Container; not updating height");
-      }
-      // if the detected plane is not the same where object is placed
-      else if (use_fixed_heights_ or (std::fabs(detected_object_height - scene_segmentation_ros_->getWorkspaceHeight()) > 0.03))
-      {
-           if (use_fixed_heights_)
-           {
-              ROS_WARN_STREAM("Assuming fixed platform heights of 0, 5, 10 and 15 cm");
-           }
-           else
-           {
-              ROS_WARN_STREAM("Difference between object height and workspace height is > 3cm");
-              ROS_WARN_STREAM("Object:" << object_list.objects[i].name << "  Object height: " << detected_object_height << "  Workspace height: " << scene_segmentation_ros_->getWorkspaceHeight() << "  Hight of floor: " << height_of_floor_);
-           }
-           // do something
-           bool is_0cm = std::fabs(detected_object_height - height_of_floor_) < 0.01;
-           bool is_5cm = std::fabs(detected_object_height - (height_of_floor_ + 0.05)) < 0.01;
-           bool is_10cm = std::fabs(detected_object_height - (height_of_floor_ + 0.1)) < 0.01;
-           bool is_15cm = std::fabs(detected_object_height - (height_of_floor_ + 0.15)) < 0.01;
-           if (is_0cm)
-           {
-                ROS_WARN_STREAM("Updating height to 0cm");
-                object_list.objects[i].pose.pose.position.z = height_of_floor_ + object_height_above_workspace_;      
-           }
-           else if (is_5cm)
-           {
-                ROS_WARN_STREAM("Updating height to 5cm");
-                object_list.objects[i].pose.pose.position.z = height_of_floor_ + 0.05 + object_height_above_workspace_;      
-           }
-           else if (is_10cm)
-           {
-                ROS_WARN_STREAM("Updating height to 10cm");
-                object_list.objects[i].pose.pose.position.z = height_of_floor_ + 0.1 + object_height_above_workspace_;      
-           }
-           else if (is_15cm)
-           {
-                ROS_WARN_STREAM("Updating height to 15cm");
-                object_list.objects[i].pose.pose.position.z = height_of_floor_ + 0.15 + object_height_above_workspace_;      
-           }
-           else
-           {
-                ROS_WARN_STREAM("Height is not 0, 5, 10 or 15 cm. Not updating height");
-           }
+    // Make pose flat
+    tf::Quaternion q2 = tf::createQuaternionFromRPY(0.0, change_in_pitch , yaw);
+    object_list.objects[i].pose.pose.orientation.x = q2.x();
+    object_list.objects[i].pose.pose.orientation.y = q2.y();
+    object_list.objects[i].pose.pose.orientation.z = q2.z();
+    object_list.objects[i].pose.pose.orientation.w = q2.w(); 
 
-      }
-      else
-      {
-          object_list.objects[i].pose.pose.position.z = scene_segmentation_ros_->getWorkspaceHeight() +
-                              object_height_above_workspace_;      
-      }
+    double detected_object_height = object_list.objects[i].pose.pose.position.z;
+    if (obj_category_ == "cavity")
+    {
+         ROS_WARN_STREAM("PP01 workstation; not updating height");
+    }
+    else if (object_list.objects[i].name == "CONTAINER_BOX_RED" ||
+             object_list.objects[i].name == "CONTAINER_BOX_BLUE")
+    {
+         ROS_WARN_STREAM("Container; not updating height");
+    }
+    // if the detected plane is not the same where object is placed
+    else if (use_fixed_heights_ or (std::fabs(detected_object_height - scene_segmentation_ros_->getWorkspaceHeight()) > 0.03))
+    {
+         if (use_fixed_heights_)
+         {
+            ROS_WARN_STREAM("Assuming fixed platform heights of 0, 5, 10 and 15 cm");
+         }
+         else
+         {
+            ROS_WARN_STREAM("Difference between object height and workspace height is > 3cm");
+         }
+         // do something
+         bool is_0cm = std::fabs(detected_object_height - height_of_floor_) < 0.01;
+         bool is_5cm = std::fabs(detected_object_height - (height_of_floor_ + 0.05)) < 0.01;
+         bool is_10cm = std::fabs(detected_object_height - (height_of_floor_ + 0.1)) < 0.01;
+         bool is_15cm = std::fabs(detected_object_height - (height_of_floor_ + 0.15)) < 0.01;
+         if (is_0cm)
+         {
+              ROS_WARN_STREAM("Updating height to 0cm");
+              object_list.objects[i].pose.pose.position.z = height_of_floor_ + object_height_above_workspace_;      
+         }
+         else if (is_5cm)
+         {
+              ROS_WARN_STREAM("Updating height to 5cm");
+              object_list.objects[i].pose.pose.position.z = height_of_floor_ + 0.05 + object_height_above_workspace_;      
+         }
+         else if (is_10cm)
+         {
+              ROS_WARN_STREAM("Updating height to 10cm");
+              object_list.objects[i].pose.pose.position.z = height_of_floor_ + 0.1 + object_height_above_workspace_;      
+         }
+         if (is_15cm)
+         {
+              ROS_WARN_STREAM("Updating height to 15cm");
+              object_list.objects[i].pose.pose.position.z = height_of_floor_ + 0.15 + object_height_above_workspace_;      
+         }
+         else
+         {
+              ROS_WARN_STREAM("Height is not 0, 5, 10 or 15 cm. Not updating height");
+         }
+
+    }
+    else
+    {
+        object_list.objects[i].pose.pose.position.z = scene_segmentation_ros_->getWorkspaceHeight() +
+                            object_height_above_workspace_;      
+    }
 
     // }
 

@@ -48,9 +48,9 @@
   <group ns="mir_perception/back_camera">
       
       <node pkg="mir_barrier_tape_detection" type="barrier_tape_detection_node" name="barrier_tape_detection"  output="screen" respawn="true">
-          <remap from="~input_rgb_image" to="/$(arg back_camera)/color/image_raw"/>
-          <remap from="~input_pointcloud" to="/$(arg back_camera)/depth/color/points"/>
-          <remap from="~camera_info" to="/$(arg back_camera)/color/camera_info"/>
+          <remap from="~input_rgb_image" to="/$(arg back_camera)/rgb/image_raw"/>
+          <remap from="~input_pointcloud" to="/$(arg back_camera)/depth_registered/points"/>
+          <remap from="~camera_info" to="/$(arg back_camera)/rgb/camera_info"/>
           <param name="loop_rate" type="int" value="30" />
           <param name="target_frame" value="map"/>
           <remap from="~event_in" to="/mir_perception/barrier_tape_detection/event_in"/>
