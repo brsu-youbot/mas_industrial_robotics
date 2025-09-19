@@ -87,11 +87,6 @@ MultimodalObjectRecognitionROS::MultimodalObjectRecognitionROS(ros::NodeHandle n
   // Pub workspace height
   pub_workspace_height_ = nh_.advertise<std_msgs::Float64>("output/workspace_height", 1);
 
-  pub_tr_plane_point_ = nh_.advertise<geometry_msgs::PointStamped>("output/tr_plane_point", 1);  
-  pub_tl_plane_point_ = nh_.advertise<geometry_msgs::PointStamped>("output/tl_plane_point", 1);  
-  pub_br_plane_point_ = nh_.advertise<geometry_msgs::PointStamped>("output/br_plane_point", 1);  
-  pub_bl_plane_point_ = nh_.advertise<geometry_msgs::PointStamped>("output/bl_plane_point", 1);  
-
   // debug topics
   pub_debug_cloud_plane_ = nh_.advertise<sensor_msgs::PointCloud2>("output/debug_cloud_plane", 1);
 
